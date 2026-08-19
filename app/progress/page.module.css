@@ -1,0 +1,327 @@
+.container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  color: #f8fafc;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  display: flex;
+  justify-content: center;
+}
+
+.mobileView {
+  width: 100%;
+  max-width: 430px;
+  background: #0f172a;
+  box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow-x: hidden;
+  overflow-y: auto;
+  min-height: 100vh;
+}
+
+.header {
+  padding: 2rem 1.5rem 1.5rem;
+  background: linear-gradient(180deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0) 100%);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+  background: linear-gradient(90deg, #38bdf8, #818cf8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.backBtn {
+  color: #94a3b8;
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: color 0.2s;
+  padding: 0.5rem;
+}
+
+.backBtn:hover {
+  color: #f8fafc;
+}
+
+.emptyState {
+  padding: 3rem 1.5rem;
+  text-align: center;
+  color: #94a3b8;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.content {
+  padding: 0 1.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.statCard {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 1.25rem;
+  padding: 1.25rem;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: transform 0.2s ease;
+}
+
+.statLabel {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+
+.statValue {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.statUnit {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin-left: 0.25rem;
+}
+
+.chartCard {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 1.25rem;
+  padding: 1.25rem;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  height: 250px;
+  display: flex;
+  flex-direction: column;
+}
+
+.chartTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #cbd5e1;
+  margin-bottom: 1rem;
+}
+
+.chartArea {
+  flex: 1;
+  width: 100%;
+  position: relative;
+}
+
+.goalCard {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 1.25rem;
+  padding: 1.25rem;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: flex;
+  flex-direction: column;
+}
+
+.goalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.goalTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #cbd5e1;
+}
+
+.goalPercentage {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #38bdf8;
+}
+
+.progressBarContainer {
+  height: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 0.75rem;
+}
+
+.progressBarFill {
+  height: 100%;
+  background: linear-gradient(90deg, #38bdf8, #818cf8);
+  border-radius: 10px;
+  transition: width 0.5s ease-in-out;
+}
+
+.progressLabels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.progressLabelValue {
+  font-weight: 600;
+  color: #f8fafc;
+}
+
+.axisLabel {
+  font-size: 0.2rem;
+  fill: #94a3b8;
+  user-select: none;
+}
+
+.crosshairLine {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  border-left: 1px dashed rgba(56, 189, 248, 0.5);
+  pointer-events: none;
+  z-index: 3;
+}
+
+.chartTooltip {
+  position: absolute;
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  pointer-events: none;
+  z-index: 10;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  white-space: nowrap;
+}
+
+.tooltipDate {
+  font-size: 0.65rem;
+  color: #94a3b8;
+  margin-bottom: 0.25rem;
+}
+
+.tooltipWeight {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #f8fafc;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.tooltipDot {
+  color: #38bdf8;
+  font-size: 0.5rem;
+}
+
+.chartHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.rangeSelect {
+  background: rgba(15, 23, 42, 0.5);
+  color: #cbd5e1;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  outline: none;
+  cursor: pointer;
+}
+
+.rangeSelect option {
+  background: #0f172a;
+  color: #cbd5e1;
+}
+
+.dateSummary {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.dateBlock {
+  display: flex;
+  flex-direction: column;
+}
+
+.dateLabel {
+  font-size: 0.65rem;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 0.25rem;
+}
+
+.dateValue {
+  font-size: 0.875rem;
+  color: #cbd5e1;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.insightsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.insightCard {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 1rem;
+  padding: 1rem;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.insightTitle {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #f8fafc;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.insightText {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  line-height: 1.4;
+}

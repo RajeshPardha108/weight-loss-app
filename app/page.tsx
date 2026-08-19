@@ -1,69 +1,241 @@
-import Image from "next/image";
+"use client";
+
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import styles from "./page.module.css";
+import { supabase } from "../lib/supabase";
+
+const getLocalDateString = () => {
+  const dateStr = new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
+  const localDate = new Date(dateStr);
+  const y = localDate.getFullYear();
+  const m = String(localDate.getMonth() + 1).padStart(2, '0');
+  const d = String(localDate.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+};
 
 export default function Home() {
+  const [weightBefore, setWeightBefore] = useState("");
+  const [weightAfter, setWeightAfter] = useState("");
+  const [savedWeight, setSavedWeight] = useState("");
+  const [steps, setSteps] = useState("");
+  const [meal, setMeal] = useState("clean");
+  const [water, setWater] = useState("");
+  const [mood, setMood] = useState("good");
+  const [statusMsg, setStatusMsg] = useState({ type: "", text: "" });
+  const [isSaving, setIsSaving] = useState(false);
+  const [logId, setLogId] = useState<number | null>(null);
+
+  useEffect(() => {
+    const fetchTodayData = async () => {
+      const todayDate = getLocalDateString();
+      const { data, error } = await supabase
+        .from('daily_logs')
+        .select('*')
+        .eq('log_date', todayDate)
+        .maybeSingle();
+      
+      if (data) {
+        setLogId(data.id);
+        if (data.weight_kg !== null) {
+          setSavedWeight(data.weight_kg.toString());
+        }
+        if (data.weight_before_toilet !== null) {
+          setWeightBefore(data.weight_before_toilet.toString());
+        }
+        if (data.weight_after_toilet !== null) {
+          setWeightAfter(data.weight_after_toilet.toString());
+        }
+      }
+    };
+    fetchTodayData();
+  }, []);
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    setStatusMsg({ type: "", text: "" });
+    try {
+      const todayDate = getLocalDateString();
+      const finalWeight = weightAfter ? parseFloat(weightAfter) : null;
+      const payload = {
+        log_date: todayDate,
+        weight_kg: finalWeight,
+        weight_before_toilet: weightBefore ? parseFloat(weightBefore) : null,
+        weight_after_toilet: weightAfter ? parseFloat(weightAfter) : null,
+        steps: steps ? parseInt(steps, 10) : null,
+        water_glasses: water ? parseInt(water, 10) : null,
+        meal_status: meal,
+        mood: mood
+      };
+
+      if (logId) {
+        const { error } = await supabase
+          .from('daily_logs')
+          .update(payload)
+          .eq('id', logId);
+        if (error) throw error;
+      } else {
+        const { data, error } = await supabase
+          .from('daily_logs')
+          .insert([payload])
+          .select()
+          .single();
+        if (error) throw error;
+        if (data) setLogId(data.id);
+      }
+      
+      if (finalWeight !== null) {
+        setSavedWeight(finalWeight.toString());
+      } else {
+        setSavedWeight("");
+      }
+      setStatusMsg({ type: "success", text: "Successfully saved!" });
+    } catch (err: any) {
+      setStatusMsg({ type: "error", text: "Failed to save: " + err.message });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const today = new Date().toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric'
+  });
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className={styles.container}>
+      <div className={styles.mobileView}>
+        <div className={styles.header} style={{ alignItems: 'flex-start' }}>
+          <div>
+            <h1 className={styles.title}>Daily Progress</h1>
+            <div className={styles.date}>{today}</div>
+          </div>
+          <Link href="/progress" style={{ color: '#38bdf8', fontSize: '0.875rem', textDecoration: 'none', fontWeight: 500, padding: '0.25rem 0' }}>
+            Progress →
+          </Link>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
+
+        <div className={styles.overview}>
+          <div className={styles.card}>
+            <div className={styles.cardLabel}>Current</div>
+            <div>
+              <span className={styles.cardValue}>{savedWeight || "--"}</span>
+              <span className={styles.cardUnit}>kg</span>
+            </div>
+          </div>
+          <div className={styles.card}>
+            <div className={styles.cardLabel}>Goal</div>
+            <div>
+              <span className={styles.cardValue}>97</span>
+              <span className={styles.cardUnit}>kg</span>
+            </div>
+          </div>
+        </div>
+
+        <div className={styles.form}>
+          <div className={styles.inputGroup}>
+            <label className={styles.label}>Before toilet (kg)</label>
+            <input
+              type="number"
+              className={styles.input}
+              placeholder="e.g. 102.5"
+              value={weightBefore}
+              onChange={(e) => setWeightBefore(e.target.value)}
+              step="0.1"
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+          </div>
+
+          <div className={styles.inputGroup}>
+            <label className={styles.label}>After toilet (kg)</label>
+            <input
+              type="number"
+              className={styles.input}
+              placeholder="e.g. 101.8"
+              value={weightAfter}
+              onChange={(e) => setWeightAfter(e.target.value)}
+              step="0.1"
+            />
+          </div>
+
+          <div className={styles.inputGroup}>
+            <label className={styles.label}>Steps</label>
+            <input
+              type="number"
+              className={styles.input}
+              placeholder="e.g. 8500"
+              value={steps}
+              onChange={(e) => setSteps(e.target.value)}
+            />
+          </div>
+
+          <div className={styles.inputGroup}>
+            <label className={styles.label}>Meals</label>
+            <div className={styles.statusGrid}>
+              <button
+                className={`${styles.statusBtn} ${meal === 'clean' ? styles.active : ''}`}
+                onClick={() => setMeal('clean')}
+              >
+                🥗 Clean
+              </button>
+              <button
+                className={`${styles.statusBtn} ${meal === 'cheat' ? styles.active : ''}`}
+                onClick={() => setMeal('cheat')}
+              >
+                🍔 Cheat
+              </button>
+            </div>
+          </div>
+
+          <div className={styles.inputGroup}>
+            <label className={styles.label}>Water (glasses)</label>
+            <input
+              type="number"
+              className={styles.input}
+              placeholder="e.g. 8"
+              value={water}
+              onChange={(e) => setWater(e.target.value)}
+            />
+          </div>
+
+          <div className={styles.inputGroup}>
+            <label className={styles.label}>Mood</label>
+            <div className={styles.moodGroup}>
+              <button
+                className={`${styles.moodBtn} ${mood === 'bad' ? styles.active : ''}`}
+                onClick={() => setMood('bad')}
+              >
+                😔
+              </button>
+              <button
+                className={`${styles.moodBtn} ${mood === 'neutral' ? styles.active : ''}`}
+                onClick={() => setMood('neutral')}
+              >
+                😐
+              </button>
+              <button
+                className={`${styles.moodBtn} ${mood === 'good' ? styles.active : ''}`}
+                onClick={() => setMood('good')}
+              >
+                😃
+              </button>
+            </div>
+          </div>
+
+          <button
+            className={styles.saveBtn}
+            onClick={handleSave}
+            disabled={isSaving}
           >
-            Documentation
-          </a>
+            {isSaving ? "Saving..." : "Save Today"}
+          </button>
+          {statusMsg.text && (
+            <div style={{ textAlign: "center", color: statusMsg.type === "error" ? "#f87171" : "#4ade80", fontSize: "0.875rem", marginTop: "-0.5rem" }}>
+              {statusMsg.text}
+            </div>
+          )}
         </div>
-      </main>
+      </div>
     </div>
   );
 }
