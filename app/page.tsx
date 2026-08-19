@@ -63,7 +63,7 @@ export default function Home() {
         weight_before_toilet: weightBefore ? parseFloat(weightBefore) : null,
         weight_after_toilet: weightAfter ? parseFloat(weightAfter) : null,
         steps: steps ? parseInt(steps, 10) : null,
-        water_glasses: water ? parseInt(water, 10) : null,
+        water_glasses: water ? parseFloat(water) : null,
         meal_status: meal,
         mood: mood
       };
@@ -188,13 +188,14 @@ export default function Home() {
           </div>
 
           <div className={styles.inputGroup}>
-            <label className={styles.label}>Water (glasses)</label>
+            <label className={styles.label}>Water (L)</label>
             <input
               type="number"
               className={styles.input}
-              placeholder="e.g. 8"
+              placeholder="e.g. 2.5"
               value={water}
               onChange={(e) => setWater(e.target.value)}
+              step="0.1"
             />
           </div>
 

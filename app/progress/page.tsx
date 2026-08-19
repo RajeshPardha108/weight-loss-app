@@ -281,7 +281,7 @@ export default function Progress() {
             {avgWater !== null && (
               <div className={styles.insightCard}>
                 <div className={styles.insightTitle}>💧 Hydration</div>
-                <div className={styles.insightText}>You're averaging {avgWater} glasses/day.</div>
+                <div className={styles.insightText}>You're averaging {avgWater} L/day.</div>
               </div>
             )}
 
