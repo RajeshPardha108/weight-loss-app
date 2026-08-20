@@ -1,0 +1,79 @@
+.navContainer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  z-index: 50;
+  pointer-events: none; /* Let clicks pass through outside the mobile view */
+}
+
+.mobileNav {
+  width: 100%;
+  max-width: 430px; /* match mobile view */
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 0.5rem 0.5rem;
+  padding-bottom: env(safe-area-inset-bottom, 1rem); /* iPhone safe area */
+  pointer-events: auto;
+}
+
+.navItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  color: #94a3b8;
+  text-decoration: none;
+  font-size: 0.65rem;
+  font-weight: 500;
+  width: 4rem;
+  transition: color 0.2s;
+}
+
+.navItem:hover, .navItem.active {
+  color: #38bdf8;
+}
+
+.navIcon {
+  width: 24px;
+  height: 24px;
+}
+
+.fabContainer {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  width: 4rem;
+}
+
+.fab {
+  position: absolute;
+  top: -30px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  box-shadow: 0 4px 15px rgba(56, 189, 248, 0.4);
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.fab:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(56, 189, 248, 0.6);
+}
+
+.fab:active {
+  transform: translateY(1px);
+}

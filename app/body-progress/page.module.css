@@ -1,0 +1,181 @@
+.container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  color: #f8fafc;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  display: flex;
+  justify-content: center;
+}
+
+.mobileView {
+  width: 100%;
+  max-width: 430px;
+  background: #0f172a;
+  box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.header {
+  padding: 2rem 1.5rem 1.5rem;
+  background: linear-gradient(180deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0) 100%);
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+  background: linear-gradient(90deg, #38bdf8, #818cf8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.content {
+  padding: 0 1.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.summaryCard {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 1.25rem;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.cardLabel {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.25rem;
+}
+
+.cardValue {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.cardUnit {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin-left: 0.25rem;
+}
+
+.sectionTitle {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #f8fafc;
+  margin: 0 0 1rem 0;
+}
+
+.historyList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.historyCard {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 1.25rem;
+  padding: 1.25rem;
+}
+
+.historyDate {
+  font-weight: 600;
+  color: #38bdf8;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+}
+
+.historyGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.metricRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.875rem;
+}
+
+.metricName {
+  color: #94a3b8;
+}
+
+.metricValue {
+  color: #f8fafc;
+  font-weight: 500;
+}
+
+.metricDelta {
+  font-size: 0.75rem;
+  margin-left: 0.5rem;
+}
+
+.deltaDown {
+  color: #4ade80;
+}
+
+.deltaUp {
+  color: #f87171;
+}
+
+.deltaNeutral {
+  color: #94a3b8;
+}
+
+.linkButton {
+  display: block;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 1rem;
+  padding: 1rem;
+  text-align: center;
+  text-decoration: none;
+  color: #38bdf8;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+}
+
+.tab {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid transparent;
+  color: #94a3b8;
+  padding: 0.5rem 1rem;
+  border-radius: 2rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.tabActive {
+  background: rgba(56, 189, 248, 0.1);
+  border-color: rgba(56, 189, 248, 0.3);
+  color: #38bdf8;
+}

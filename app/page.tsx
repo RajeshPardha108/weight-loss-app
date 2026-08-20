@@ -15,227 +15,126 @@ const getLocalDateString = () => {
 };
 
 export default function Home() {
-  const [weightBefore, setWeightBefore] = useState("");
-  const [weightAfter, setWeightAfter] = useState("");
-  const [savedWeight, setSavedWeight] = useState("");
-  const [steps, setSteps] = useState("");
-  const [meal, setMeal] = useState("clean");
-  const [water, setWater] = useState("");
-  const [mood, setMood] = useState("good");
-  const [statusMsg, setStatusMsg] = useState({ type: "", text: "" });
-  const [isSaving, setIsSaving] = useState(false);
-  const [logId, setLogId] = useState<number | null>(null);
+  const [log, setLog] = useState<any>(null);
+  const [goal, setGoal] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchTodayData = async () => {
       const todayDate = getLocalDateString();
-      const { data, error } = await supabase
-        .from('daily_logs')
-        .select('*')
-        .eq('log_date', todayDate)
-        .maybeSingle();
+      const [logRes, settingsRes] = await Promise.all([
+        supabase
+          .from('daily_logs')
+          .select('*')
+          .eq('log_date', todayDate)
+          .maybeSingle(),
+        supabase
+          .from('user_settings')
+          .select('goal_weight_kg')
+          .eq('id', 1)
+          .single()
+      ]);
       
-      if (data) {
-        setLogId(data.id);
-        if (data.weight_kg !== null) {
-          setSavedWeight(data.weight_kg.toString());
-        }
-        if (data.weight_before_toilet !== null) {
-          setWeightBefore(data.weight_before_toilet.toString());
-        }
-        if (data.weight_after_toilet !== null) {
-          setWeightAfter(data.weight_after_toilet.toString());
-        }
+      if (logRes.data) {
+        setLog(logRes.data);
       }
+      if (settingsRes.data && settingsRes.data.goal_weight_kg) {
+        setGoal(Number(settingsRes.data.goal_weight_kg));
+      }
+      setLoading(false);
     };
     fetchTodayData();
   }, []);
 
-  const handleSave = async () => {
-    setIsSaving(true);
-    setStatusMsg({ type: "", text: "" });
-    try {
-      const todayDate = getLocalDateString();
-      const finalWeight = weightAfter ? parseFloat(weightAfter) : null;
-      const payload = {
-        log_date: todayDate,
-        weight_kg: finalWeight,
-        weight_before_toilet: weightBefore ? parseFloat(weightBefore) : null,
-        weight_after_toilet: weightAfter ? parseFloat(weightAfter) : null,
-        steps: steps ? parseInt(steps, 10) : null,
-        water_glasses: water ? parseFloat(water) : null,
-        meal_status: meal,
-        mood: mood
-      };
-
-      if (logId) {
-        const { error } = await supabase
-          .from('daily_logs')
-          .update(payload)
-          .eq('id', logId);
-        if (error) throw error;
-      } else {
-        const { data, error } = await supabase
-          .from('daily_logs')
-          .insert([payload])
-          .select()
-          .single();
-        if (error) throw error;
-        if (data) setLogId(data.id);
-      }
-      
-      if (finalWeight !== null) {
-        setSavedWeight(finalWeight.toString());
-      } else {
-        setSavedWeight("");
-      }
-      setStatusMsg({ type: "success", text: "Successfully saved!" });
-    } catch (err: any) {
-      setStatusMsg({ type: "error", text: "Failed to save: " + err.message });
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const today = new Date().toLocaleDateString('en-US', {
+  const todayStr = new Date().toLocaleDateString('en-US', {
     weekday: 'long',
     month: 'long',
     day: 'numeric'
   });
 
+  const getMoodEmoji = (m: string) => {
+    if (m === 'good') return '😄';
+    if (m === 'neutral') return '😐';
+    if (m === 'bad') return '😞';
+    return '';
+  };
+
   return (
     <div className={styles.container}>
       <div className={styles.mobileView}>
-        <div className={styles.header} style={{ alignItems: 'flex-start' }}>
+        <div className={styles.header} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
-            <h1 className={styles.title}>Daily Progress</h1>
-            <div className={styles.date}>{today}</div>
+            <h1 className={styles.title}>Today's Overview</h1>
+            <div className={styles.date}>{todayStr}</div>
           </div>
-          <Link href="/progress" style={{ color: '#38bdf8', fontSize: '0.875rem', textDecoration: 'none', fontWeight: 500, padding: '0.25rem 0' }}>
-            Progress →
-          </Link>
-        </div>
-
-        <div className={styles.overview}>
-          <div className={styles.card}>
-            <div className={styles.cardLabel}>Current</div>
-            <div>
-              <span className={styles.cardValue}>{savedWeight || "--"}</span>
-              <span className={styles.cardUnit}>kg</span>
-            </div>
-          </div>
-          <div className={styles.card}>
-            <div className={styles.cardLabel}>Goal</div>
-            <div>
-              <span className={styles.cardValue}>97</span>
-              <span className={styles.cardUnit}>kg</span>
-            </div>
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ color: '#818cf8', fontSize: '0.875rem', fontWeight: 600 }}>Goal</div>
+            <div style={{ color: '#f8fafc', fontSize: '1.25rem', fontWeight: 700 }}>{goal ? `${goal} kg` : '--'}</div>
           </div>
         </div>
 
-        <div className={styles.form}>
-          <div className={styles.inputGroup}>
-            <label className={styles.label}>Before toilet (kg)</label>
-            <input
-              type="number"
-              className={styles.input}
-              placeholder="e.g. 102.5"
-              value={weightBefore}
-              onChange={(e) => setWeightBefore(e.target.value)}
-              step="0.1"
-            />
-          </div>
-
-          <div className={styles.inputGroup}>
-            <label className={styles.label}>After toilet (kg)</label>
-            <input
-              type="number"
-              className={styles.input}
-              placeholder="e.g. 101.8"
-              value={weightAfter}
-              onChange={(e) => setWeightAfter(e.target.value)}
-              step="0.1"
-            />
-          </div>
-
-          <div className={styles.inputGroup}>
-            <label className={styles.label}>Steps</label>
-            <input
-              type="number"
-              className={styles.input}
-              placeholder="e.g. 8500"
-              value={steps}
-              onChange={(e) => setSteps(e.target.value)}
-            />
-          </div>
-
-          <div className={styles.inputGroup}>
-            <label className={styles.label}>Meals</label>
-            <div className={styles.statusGrid}>
-              <button
-                className={`${styles.statusBtn} ${meal === 'clean' ? styles.active : ''}`}
-                onClick={() => setMeal('clean')}
-              >
-                🥗 Clean
-              </button>
-              <button
-                className={`${styles.statusBtn} ${meal === 'cheat' ? styles.active : ''}`}
-                onClick={() => setMeal('cheat')}
-              >
-                🍔 Cheat
-              </button>
+        {loading ? (
+          <div style={{ padding: '2rem', textAlign: 'center', color: '#94a3b8' }}>Loading...</div>
+        ) : (
+          <div className={styles.form} style={{ gap: '1rem' }}>
+            
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <div className={styles.card} style={{ margin: 0 }}>
+                <div className={styles.cardLabel}>Current Weight</div>
+                <div>
+                  <span className={styles.cardValue}>{log?.weight_kg || "--"}</span>
+                  <span className={styles.cardUnit}>kg</span>
+                </div>
+              </div>
+              <div className={styles.card} style={{ margin: 0 }}>
+                <div className={styles.cardLabel}>Steps</div>
+                <div>
+                  <span className={styles.cardValue}>{log?.steps || "--"}</span>
+                </div>
+              </div>
             </div>
-          </div>
 
-          <div className={styles.inputGroup}>
-            <label className={styles.label}>Water (L)</label>
-            <input
-              type="number"
-              className={styles.input}
-              placeholder="e.g. 2.5"
-              value={water}
-              onChange={(e) => setWater(e.target.value)}
-              step="0.1"
-            />
-          </div>
-
-          <div className={styles.inputGroup}>
-            <label className={styles.label}>Mood</label>
-            <div className={styles.moodGroup}>
-              <button
-                className={`${styles.moodBtn} ${mood === 'bad' ? styles.active : ''}`}
-                onClick={() => setMood('bad')}
-              >
-                😔
-              </button>
-              <button
-                className={`${styles.moodBtn} ${mood === 'neutral' ? styles.active : ''}`}
-                onClick={() => setMood('neutral')}
-              >
-                😐
-              </button>
-              <button
-                className={`${styles.moodBtn} ${mood === 'good' ? styles.active : ''}`}
-                onClick={() => setMood('good')}
-              >
-                😃
-              </button>
+            <div style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.05)', borderRadius: '1.25rem', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '0.875rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Daily Trackers</h3>
+              
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: '#f8fafc', fontWeight: 500 }}>💧 Water</span>
+                <span style={{ color: log?.water_glasses ? '#4ade80' : '#64748b' }}>
+                  {log?.water_glasses ? `${log.water_glasses} L` : '—'}
+                </span>
+              </div>
+              
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: '#f8fafc', fontWeight: 500 }}>🍽 Food</span>
+                <span style={{ color: log?.meal_status ? '#4ade80' : '#64748b', textTransform: 'capitalize' }}>
+                  {log?.meal_status || '—'}
+                </span>
+              </div>
+              
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: '#f8fafc', fontWeight: 500 }}>🙂 Mood</span>
+                <span style={{ color: log?.mood ? '#4ade80' : '#64748b' }}>
+                  {log?.mood ? getMoodEmoji(log.mood) : '—'}
+                </span>
+              </div>
             </div>
-          </div>
 
-          <button
-            className={styles.saveBtn}
-            onClick={handleSave}
-            disabled={isSaving}
-          >
-            {isSaving ? "Saving..." : "Save Today"}
-          </button>
-          {statusMsg.text && (
-            <div style={{ textAlign: "center", color: statusMsg.type === "error" ? "#f87171" : "#4ade80", fontSize: "0.875rem", marginTop: "-0.5rem" }}>
-              {statusMsg.text}
-            </div>
-          )}
-        </div>
+            <Link href="/log" style={{
+              background: 'linear-gradient(135deg, #38bdf8 0%, #818cf8 100%)',
+              color: 'white',
+              borderRadius: '1rem',
+              padding: '1rem',
+              textAlign: 'center',
+              textDecoration: 'none',
+              fontWeight: 600,
+              marginTop: '0.5rem',
+              boxShadow: '0 10px 20px -10px rgba(56, 189, 248, 0.5)'
+            }}>
+              + Log Activity
+            </Link>
+
+          </div>
+        )}
       </div>
     </div>
   );

@@ -21,6 +21,8 @@ const parseLogDate = (dateStr: string) => {
 
 export default function Progress() {
   const [logs, setLogs] = useState<any[]>([]);
+  const [measurements, setMeasurements] = useState<any[]>([]);
+  const [goal, setGoal] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [activePointIndex, setActivePointIndex] = useState<number | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -29,15 +31,45 @@ export default function Progress() {
 
   useEffect(() => {
     const fetchData = async () => {
-      const { data, error } = await supabase
-        .from('daily_logs')
-        .select('log_date, weight_kg, steps, water_glasses, meal_status')
-        .order('log_date', { ascending: true });
-      
-      if (data) {
-        setLogs(data);
+      try {
+        const [logsRes, settingsRes, measurementsRes] = await Promise.all([
+          supabase
+            .from('daily_logs')
+            .select('log_date, weight_kg, steps, water_glasses, meal_status')
+            .order('log_date', { ascending: true }),
+          supabase
+            .from('user_settings')
+            .select('goal_weight_kg')
+            .eq('id', 1)
+            .single(),
+          supabase
+            .from('body_measurements')
+            .select('*')
+            .order('measurement_date', { ascending: true })
+        ]);
+        
+        if (logsRes.error) {
+          console.error("Failed to fetch logs:", logsRes.error);
+        } else if (logsRes.data) {
+          setLogs(logsRes.data);
+        }
+
+        if (settingsRes.error) {
+          console.error("Failed to fetch goal:", settingsRes.error);
+        } else if (settingsRes.data && settingsRes.data.goal_weight_kg) {
+          setGoal(Number(settingsRes.data.goal_weight_kg));
+        }
+
+        if (measurementsRes.error) {
+          console.error("Failed to fetch measurements:", measurementsRes.error);
+        } else if (measurementsRes.data) {
+          setMeasurements(measurementsRes.data);
+        }
+      } catch (err) {
+        console.error("Unexpected error in fetchData:", err);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
     fetchData();
   }, []);
@@ -78,8 +110,7 @@ export default function Progress() {
   const startingWeight = weightLogs[0].weight_kg;
   const currentWeight = weightLogs[weightLogs.length - 1].weight_kg;
   const weightLost = startingWeight - currentWeight;
-  const goal = 97;
-  const remaining = currentWeight - goal;
+  const remaining = goal !== null ? (currentWeight > goal ? currentWeight - goal : 0) : null;
 
   const todayDate = getLocalDateString();
   const msInDay = 24 * 60 * 60 * 1000;
@@ -105,8 +136,27 @@ export default function Progress() {
     ? last30DaysLogs.reduce((acc, curr) => acc + curr.weight_kg, 0) / last30DaysLogs.length
     : null;
 
-  let progressPct = startingWeight !== goal ? ((startingWeight - currentWeight) / (startingWeight - goal)) * 100 : 100;
+  const finalGoal = goal;
+  let activeGoal = finalGoal;
+  
+  if (finalGoal !== null && startingWeight > finalGoal) {
+    const referenceWeight = avg7Day !== null ? avg7Day : currentWeight;
+    const milestoneStep = 2.5;
+    let candidateGoal = Math.floor(startingWeight / milestoneStep) * milestoneStep;
+    
+    // Keep dropping the milestone by 2.5kg until we find a goal the user hasn't reached yet.
+    while (candidateGoal >= referenceWeight && candidateGoal > finalGoal) {
+      candidateGoal -= milestoneStep;
+    }
+    
+    activeGoal = Math.max(finalGoal, candidateGoal);
+  }
+
+  let progressPct = (startingWeight !== activeGoal && activeGoal !== null) ? ((startingWeight - currentWeight) / (startingWeight - activeGoal)) * 100 : 100;
   progressPct = Math.max(0, Math.min(100, progressPct));
+
+  const remainingToActive = activeGoal !== null ? (currentWeight > activeGoal ? currentWeight - activeGoal : 0) : null;
+  const remainingToFinal = finalGoal !== null ? (currentWeight > finalGoal ? currentWeight - finalGoal : 0) : null;
 
   // --- INSIGHT CALCULATIONS ---
   let weightInsight = { icon: '➡️', title: 'Weight is holding steady', desc: 'Recent average is similar to longer-term average.' };
@@ -139,8 +189,8 @@ export default function Progress() {
   const maxHistoricalWeight = Math.max(...chartLogs.map(l => l.weight_kg));
   
   // Calculate unified Y domain
-  const chartMinWeight = Math.floor(Math.min(minHistoricalWeight, goal)) - 2;
-  const chartMaxWeight = Math.ceil(Math.max(maxHistoricalWeight, goal)) + 2;
+  const chartMinWeight = activeGoal !== null ? Math.floor(Math.min(minHistoricalWeight, activeGoal)) - 2 : minHistoricalWeight - 2;
+  const chartMaxWeight = activeGoal !== null ? Math.ceil(Math.max(maxHistoricalWeight, activeGoal)) + 2 : maxHistoricalWeight + 2;
   const range = chartMaxWeight - chartMinWeight;
 
   const getY = (val: number) => 100 - (((val - chartMinWeight) / range) * 100);
@@ -159,7 +209,7 @@ export default function Progress() {
     };
   });
 
-  const goalY = getY(goal);
+  const goalY = activeGoal !== null ? getY(activeGoal) : null;
 
   const handlePointerMove = (e: React.PointerEvent) => {
     if (!chartRef.current || pointData.length === 0) return;
@@ -189,44 +239,44 @@ export default function Progress() {
 
         <div className={styles.content}>
           <div className={styles.statsGrid}>
-            <div className={styles.statCard}>
+            <div className={styles.statCard} style={{ gridColumn: '1 / -1' }}>
               <div className={styles.statLabel}>Current</div>
               <div>
                 <span className={styles.statValue}>{currentWeight.toFixed(1)}</span>
                 <span className={styles.statUnit}>kg</span>
               </div>
             </div>
+            
             <div className={styles.statCard}>
-              <div className={styles.statLabel}>Progress</div>
+              <div className={styles.statLabel}>Active Goal</div>
               <div>
-                <span className={styles.statValue}>{progressPct.toFixed(0)}</span>
-                <span className={styles.statUnit}>%</span>
-              </div>
-            </div>
-            <div className={styles.statCard}>
-              <div className={styles.statLabel}>Starting</div>
-              <div>
-                <span className={styles.statValue}>{startingWeight.toFixed(1)}</span>
+                <span className={styles.statValue}>{activeGoal !== null ? activeGoal.toFixed(1) : "--"}</span>
                 <span className={styles.statUnit}>kg</span>
               </div>
             </div>
             <div className={styles.statCard}>
-              <div className={styles.statLabel}>Lost</div>
+              <div className={styles.statLabel}>Final Goal</div>
               <div>
-                <span className={styles.statValue}>{weightLost > 0 ? weightLost.toFixed(1) : 0}</span>
+                <span className={styles.statValue}>{finalGoal !== null ? finalGoal.toFixed(1) : "--"}</span>
                 <span className={styles.statUnit}>kg</span>
               </div>
             </div>
-            <div className={styles.statCard} style={{ gridColumn: '1 / -1' }}>
-              <div className={styles.statLabel}>Remaining</div>
+            
+            <div className={styles.statCard}>
+              <div className={styles.statLabel}>Rem. to Active</div>
               <div>
-                <span className={styles.statValue}>{remaining > 0 ? remaining.toFixed(1) : 0}</span>
+                <span className={styles.statValue}>{remainingToActive !== null ? remainingToActive.toFixed(1) : "--"}</span>
                 <span className={styles.statUnit}>kg</span>
               </div>
             </div>
-          </div>
+            <div className={styles.statCard}>
+              <div className={styles.statLabel}>Rem. to Final</div>
+              <div>
+                <span className={styles.statValue}>{remainingToFinal !== null ? remainingToFinal.toFixed(1) : "--"}</span>
+                <span className={styles.statUnit}>kg</span>
+              </div>
+            </div>
 
-          <div className={styles.statsGrid}>
             <div className={styles.statCard}>
               <div className={styles.statLabel}>7-Day Avg</div>
               <div>
@@ -243,20 +293,22 @@ export default function Progress() {
             </div>
           </div>
 
-          <div className={styles.goalCard}>
-            <div className={styles.goalHeader}>
-              <span className={styles.goalTitle}>Goal Progress</span>
-              <span className={styles.goalPercentage}>{progressPct.toFixed(0)}%</span>
+          {activeGoal !== null && (
+            <div className={styles.goalCard}>
+              <div className={styles.goalHeader}>
+                <span className={styles.goalTitle}>Active Goal Progress</span>
+                <span className={styles.goalPercentage}>{progressPct.toFixed(0)}%</span>
+              </div>
+              <div className={styles.progressBarContainer}>
+                <div className={styles.progressBarFill} style={{ width: `${progressPct}%` }} />
+              </div>
+              <div className={styles.progressLabels}>
+                <span>Start: <span className={styles.progressLabelValue}>{startingWeight.toFixed(1)}kg</span></span>
+                <span>Current: <span className={styles.progressLabelValue}>{currentWeight.toFixed(1)}kg</span></span>
+                <span>Active: <span className={styles.progressLabelValue}>{activeGoal}kg</span></span>
+              </div>
             </div>
-            <div className={styles.progressBarContainer}>
-              <div className={styles.progressBarFill} style={{ width: `${progressPct}%` }} />
-            </div>
-            <div className={styles.progressLabels}>
-              <span>Start: <span className={styles.progressLabelValue}>{startingWeight.toFixed(1)}kg</span></span>
-              <span>Current: <span className={styles.progressLabelValue}>{currentWeight.toFixed(1)}kg</span></span>
-              <span>Goal: <span className={styles.progressLabelValue}>{goal}kg</span></span>
-            </div>
-          </div>
+          )}
 
           <div className={styles.insightsContainer}>
             <div className={styles.chartTitle} style={{ marginBottom: '0.25rem' }}>Progress Insights</div>
@@ -266,10 +318,12 @@ export default function Progress() {
               <div className={styles.insightText}>{weightInsight.desc}</div>
             </div>
             
-            <div className={styles.insightCard}>
-              <div className={styles.insightTitle}>🎯 You're {progressPct.toFixed(0)}% toward your goal</div>
-              <div className={styles.insightText}>{remaining > 0 ? `${remaining.toFixed(1)} kg remaining to reach ${goal} kg.` : `You've reached your ${goal} kg goal!`}</div>
-            </div>
+            {activeGoal !== null && remainingToActive !== null && (
+              <div className={styles.insightCard}>
+                <div className={styles.insightTitle}>🎯 You're {progressPct.toFixed(0)}% toward your active goal</div>
+                <div className={styles.insightText}>{remainingToActive > 0 ? `${remainingToActive.toFixed(1)} kg remaining to reach ${activeGoal} kg.` : `You've reached your ${activeGoal} kg active goal!`}</div>
+              </div>
+            )}
 
             {avgSteps !== null && (
               <div className={styles.insightCard}>
@@ -323,7 +377,9 @@ export default function Progress() {
                       const y = getY(w);
                       return <line key={i} x1="0" y1={y} x2="100" y2={y} stroke="rgba(255,255,255,0.05)" strokeWidth="1" vectorEffect="non-scaling-stroke" />;
                     })}
-                    <line x1="0" y1={goalY} x2="100" y2={goalY} stroke="#10b981" strokeWidth="1" strokeDasharray="4" vectorEffect="non-scaling-stroke" />
+                    {activeGoal !== null && goalY !== null && (
+                      <line x1="0" y1={goalY} x2="100" y2={goalY} stroke="#10b981" strokeWidth="1" strokeDasharray="4" vectorEffect="non-scaling-stroke" />
+                    )}
                     <polyline
                       fill="none"
                       stroke="#38bdf8"
@@ -341,7 +397,9 @@ export default function Progress() {
                         {Math.round(w)}
                       </div>
                     ))}
-                    <div style={{ position: 'absolute', top: `${goalY}%`, left: 0, transform: 'translateY(-100%)', fontSize: '0.65rem', color: '#10b981', paddingTop: '2px' }}>Goal: 97kg</div>
+                    {activeGoal !== null && goalY !== null && (
+                      <div style={{ position: 'absolute', top: `${goalY}%`, left: 0, transform: 'translateY(-100%)', fontSize: '0.65rem', color: '#10b981', paddingTop: '2px' }}>Goal: {activeGoal}kg</div>
+                    )}
                     
                     {pointData.map((p) => {
                       const isActive = activePointIndex === p.index;
@@ -408,6 +466,14 @@ export default function Progress() {
                 <div className={styles.dateLabel}>Latest</div>
               </div>
             </div>
+
+            {measurements.length > 0 && (
+              <div style={{ marginTop: '2rem' }}>
+                <Link href="/body-progress" style={{ display: 'block', background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(56, 189, 248, 0.3)', borderRadius: '1rem', padding: '1rem', textAlign: 'center', textDecoration: 'none', color: '#38bdf8', fontWeight: 600, transition: 'all 0.2s ease' }}>
+                  Body Progress →
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       </div>
