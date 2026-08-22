@@ -50,39 +50,3 @@
   height: 24px;
 }
 
-.fabSpacer {
-  width: 4rem;
-}
-
-.fabContainer {
-  position: absolute;
-  top: -30px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  justify-content: center;
-  z-index: 10;
-}
-
-.fab {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  color: white;
-  box-shadow: 0 4px 15px rgba(56, 189, 248, 0.4);
-  cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.fab:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(56, 189, 248, 0.6);
-}
-
-.fab:active {
-  transform: translateY(1px);
-}

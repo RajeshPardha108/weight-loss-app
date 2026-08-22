@@ -80,14 +80,14 @@ function FoodLogContent() {
   return (
     <div className={styles.container}>
       <div className={styles.mobileView}>
-        <div className={styles.header}>
+        <div className={styles.header} style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '0.75rem' }}>
+          <Link href={`/log${querySuffix}`} style={{ color: '#38bdf8', fontSize: '0.875rem', textDecoration: 'none' }}>
+            ← Back
+          </Link>
           <div>
             <h1 className={styles.title}>Log Food</h1>
             <div className={styles.date}>{dateParam}</div>
           </div>
-          <Link href={`/log${querySuffix}`} style={{ color: '#38bdf8', fontSize: '0.875rem', textDecoration: 'none' }}>
-            ← Back
-          </Link>
         </div>
 
         <div className={styles.form}>

@@ -100,14 +100,6 @@ export default function BodyProgress() {
           <h1 className={styles.title}>Body Progress</h1>
         </div>
 
-        {/* SEGMENTED CONTROL */}
-        <div className={styles.segmentedControl}>
-          <button className={`${styles.segmentBtn} ${activeTab === 'overview' ? styles.active : ''}`} onClick={() => setActiveTab('overview')}>Overview</button>
-          <button className={`${styles.segmentBtn} ${activeTab === 'measurements' ? styles.active : ''}`} onClick={() => setActiveTab('measurements')}>Measurements</button>
-          <button className={`${styles.segmentBtn} ${activeTab === 'charts' ? styles.active : ''}`} onClick={() => setActiveTab('charts')}>Charts</button>
-          <button className={`${styles.segmentBtn} ${activeTab === 'photos' ? styles.active : ''}`} onClick={() => setActiveTab('photos')}>Photos</button>
-        </div>
-
         {measurements.length === 0 ? (
           <div className={styles.emptyState}>
             <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📏</div>
@@ -225,30 +217,6 @@ export default function BodyProgress() {
           </div>
         )}
 
-        {/* BOTTOM NAV */}
-        <div className={styles.bottomNavWrapper}>
-          <div className={styles.bottomNav}>
-            <Link href="/" className={styles.navItem}>
-              <span className={styles.navIcon}>🏠</span>
-              <span className={styles.navLabel}>Home</span>
-            </Link>
-            <Link href="/progress" className={styles.navItem}>
-              <span className={styles.navIcon}>📈</span>
-              <span className={styles.navLabel}>Progress</span>
-            </Link>
-            <Link href="/log" className={styles.navItemCenter}>
-              <div className={styles.navPlus}>+</div>
-            </Link>
-            <Link href="/body-progress" className={`${styles.navItem} ${styles.active}`}>
-              <span className={styles.navIcon}>🧍‍♂️</span>
-              <span className={styles.navLabel}>Body</span>
-            </Link>
-            <Link href="/journal" className={styles.navItem}>
-              <span className={styles.navIcon}>📝</span>
-              <span className={styles.navLabel}>Journal</span>
-            </Link>
-          </div>
-        </div>
       </div>
     </div>
   );

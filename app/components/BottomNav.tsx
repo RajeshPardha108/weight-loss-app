@@ -30,8 +30,6 @@ export default function BottomNav() {
             Journal
           </Link>
 
-          <div className={styles.fabSpacer}></div>
-
           <Link href="/progress" className={`${styles.navItem} ${pathname?.startsWith('/progress') ? styles.active : ''}`}>
             <svg className={styles.navIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
@@ -46,15 +44,6 @@ export default function BottomNav() {
               <circle cx="5" cy="12" r="1"></circle>
             </svg>
             More
-          </Link>
-        </div>
-
-        <div className={styles.fabContainer}>
-          <Link href="/log" className={styles.fab}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="12" y1="5" x2="12" y2="19"></line>
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-            </svg>
           </Link>
         </div>
       </div>

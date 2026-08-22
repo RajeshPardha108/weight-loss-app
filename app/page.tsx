@@ -242,7 +242,6 @@ export default function Home() {
             {/* TODAY'S LOG */}
             <div className={styles.sectionHeader} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span>Today's Log</span>
-              <Link href="/log" className={styles.editLink}>Edit</Link>
             </div>
             
             <div className={styles.logSummaryCard}>
@@ -300,30 +299,6 @@ export default function Home() {
           </div>
         </div>
 
-        {/* BOTTOM NAV */}
-        <div className={styles.bottomNavWrapper}>
-          <div className={styles.bottomNav}>
-            <Link href="/" className={`${styles.navItem} ${styles.active}`}>
-              <span className={styles.navIcon}>🏠</span>
-              <span className={styles.navLabel}>Home</span>
-            </Link>
-            <Link href="/progress" className={styles.navItem}>
-              <span className={styles.navIcon}>📈</span>
-              <span className={styles.navLabel}>Progress</span>
-            </Link>
-            <Link href="/log" className={styles.navItemCenter}>
-              <div className={styles.navPlus}>+</div>
-            </Link>
-            <Link href="/body-progress" className={styles.navItem}>
-              <span className={styles.navIcon}>🧍‍♂️</span>
-              <span className={styles.navLabel}>Body</span>
-            </Link>
-            <Link href="/journal" className={styles.navItem}>
-              <span className={styles.navIcon}>📝</span>
-              <span className={styles.navLabel}>Journal</span>
-            </Link>
-          </div>
-        </div>
       </div>
     </div>
   );

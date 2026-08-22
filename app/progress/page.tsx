@@ -183,13 +183,6 @@ export default function Progress() {
           <h1 className={styles.title}>Progress</h1>
         </div>
 
-        {/* SEGMENTED CONTROL */}
-        <div className={styles.segmentedControl}>
-          <button className={`${styles.segmentBtn} ${activeTab === 'weight' ? styles.active : ''}`} onClick={() => setActiveTab('weight')}>Weight</button>
-          <button className={`${styles.segmentBtn} ${activeTab === 'measurements' ? styles.active : ''}`} onClick={() => router.push('/body-progress')}>Measurements</button>
-          <button className={`${styles.segmentBtn} ${activeTab === 'trends' ? styles.active : ''}`} onClick={() => setActiveTab('trends')}>Trends</button>
-        </div>
-
         <div className={styles.gridDesktop}>
           
           {/* LEFT COLUMN: Main Chart & Goals */}
@@ -359,30 +352,6 @@ export default function Progress() {
           </div>
         </div>
 
-        {/* BOTTOM NAV */}
-        <div className={styles.bottomNavWrapper}>
-          <div className={styles.bottomNav}>
-            <Link href="/" className={styles.navItem}>
-              <span className={styles.navIcon}>🏠</span>
-              <span className={styles.navLabel}>Home</span>
-            </Link>
-            <Link href="/progress" className={`${styles.navItem} ${styles.active}`}>
-              <span className={styles.navIcon}>📈</span>
-              <span className={styles.navLabel}>Progress</span>
-            </Link>
-            <Link href="/log" className={styles.navItemCenter}>
-              <div className={styles.navPlus}>+</div>
-            </Link>
-            <Link href="/body-progress" className={styles.navItem}>
-              <span className={styles.navIcon}>🧍‍♂️</span>
-              <span className={styles.navLabel}>Body</span>
-            </Link>
-            <Link href="/journal" className={styles.navItem}>
-              <span className={styles.navIcon}>📝</span>
-              <span className={styles.navLabel}>Journal</span>
-            </Link>
-          </div>
-        </div>
       </div>
     </div>
   );
