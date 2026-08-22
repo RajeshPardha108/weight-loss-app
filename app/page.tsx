@@ -294,7 +294,7 @@ export default function Home() {
                 </div>
               </div>
               
-              {!log && (
+              {!loading && !log && (
                 <Link href="/log" className={styles.primaryActionBtn}>
                   Log Today's Data
                 </Link>

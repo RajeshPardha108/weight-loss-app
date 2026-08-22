@@ -1,26 +1,29 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import styles from "../../page.module.css";
+import styles from "../log-form.module.css";
 import { supabase } from "../../../lib/supabase";
 
-const getLocalDateString = () => {
-  const dateStr = new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
-  const localDate = new Date(dateStr);
-  const y = localDate.getFullYear();
-  const m = String(localDate.getMonth() + 1).padStart(2, '0');
-  const d = String(localDate.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-};
-
-import { Suspense } from "react";
+function getLocalDateString(d: Date = new Date()) {
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  const parts = formatter.formatToParts(d);
+  const y = parts.find(p => p.type === 'year')?.value;
+  const m = parts.find(p => p.type === 'month')?.value;
+  const dNum = parts.find(p => p.type === 'day')?.value;
+  return y + '-' + m + '-' + dNum;
+}
 
 function MoodLogContent() {
   const searchParams = useSearchParams();
   const dateParam = searchParams?.get("date") || getLocalDateString();
-  
+
   const [logId, setLogId] = useState<number | null>(null);
   const [mood, setMood] = useState("");
   const [isSaving, setIsSaving] = useState(false);
@@ -30,17 +33,22 @@ function MoodLogContent() {
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
-      const { data } = await supabase
-        .from('daily_logs')
-        .select('id, mood')
-        .eq('log_date', dateParam)
-        .maybeSingle();
+      try {
+        const { data } = await supabase
+          .from('daily_logs')
+          .select('id, mood')
+          .eq('log_date', dateParam)
+          .maybeSingle();
 
-      if (data) {
-        setLogId(data.id);
-        if (data.mood !== null) setMood(data.mood);
+        if (data) {
+          setLogId(data.id);
+          if (data.mood !== null) setMood(data.mood);
+        }
+      } catch (err) {
+        console.error('Failed to fetch mood log:', err);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
     fetchData();
   }, [dateParam]);
@@ -62,8 +70,8 @@ function MoodLogContent() {
         if (error) throw error;
         if (data) setLogId(data.id);
       }
-      
-      setStatusMsg({ type: "success", text: "Successfully saved!" });
+
+      setStatusMsg({ type: "success", text: "Saved!" });
     } catch (err: any) {
       setStatusMsg({ type: "error", text: "Failed to save: " + err.message });
     } finally {
@@ -75,16 +83,14 @@ function MoodLogContent() {
     return <div className={styles.container}><div className={styles.mobileView}><div className={styles.header}>Loading...</div></div></div>;
   }
 
-  const querySuffix = searchParams?.get("date") ? `?date=${searchParams.get("date")}` : "";
+  const querySuffix = searchParams?.get("date") ? "?date=" + searchParams.get("date") : "";
 
   return (
     <div className={styles.container}>
       <div className={styles.mobileView}>
-        <div className={styles.header} style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '0.75rem' }}>
-          <Link href={`/log${querySuffix}`} style={{ color: '#38bdf8', fontSize: '0.875rem', textDecoration: 'none' }}>
-            ← Back
-          </Link>
-          <div>
+        <div className={styles.header}>
+          <div className={styles.headerLeft}>
+            <Link href={"/log" + querySuffix} className={styles.backLink}>← Back</Link>
             <h1 className={styles.title}>Log Mood</h1>
             <div className={styles.date}>{dateParam}</div>
           </div>
@@ -92,7 +98,7 @@ function MoodLogContent() {
 
         <div className={styles.form}>
           <div className={styles.inputGroup}>
-            <label className={styles.label}>Mood</label>
+            <label className={styles.label}>How are you feeling?</label>
             <div className={styles.moodGroup}>
               <button
                 className={`${styles.moodBtn} ${mood === 'bad' ? styles.active : ''}`}
@@ -118,7 +124,7 @@ function MoodLogContent() {
           <button className={styles.saveBtn} onClick={handleSave} disabled={isSaving}>
             {isSaving ? "Saving..." : "Save Mood"}
           </button>
-          
+
           {statusMsg.text && (
             <div style={{ textAlign: "center", color: statusMsg.type === "error" ? "#f87171" : "#4ade80", fontSize: "0.875rem", marginTop: "-0.5rem" }}>
               {statusMsg.text}
