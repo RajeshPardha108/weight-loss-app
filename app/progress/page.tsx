@@ -7,13 +7,18 @@ import styles from "./page.module.css";
 import { supabase } from "../../lib/supabase";
 import { fetchUserGoals } from "../../lib/goals";
 
-const getLocalDateString = () => {
-  const dateStr = new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
-  const localDate = new Date(dateStr);
-  const y = localDate.getFullYear();
-  const m = String(localDate.getMonth() + 1).padStart(2, '0');
-  const d = String(localDate.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
+const getLocalDateString = (d: Date = new Date()) => {
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  });
+  const parts = formatter.formatToParts(d);
+  const y = parts.find(p => p.type === 'year')?.value;
+  const m = parts.find(p => p.type === 'month')?.value;
+  const dNum = parts.find(p => p.type === 'day')?.value;
+  return `${y}-${m}-${dNum}`;
 };
 
 const parseLogDate = (dateStr: string) => {
@@ -27,6 +32,7 @@ export default function Progress() {
   const [measurements, setMeasurements] = useState<any[]>([]);
   const [goalObj, setGoalObj] = useState<{ activeGoal: number, finalGoal: number } | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("weight");
   const [activePointIndex, setActivePointIndex] = useState<number | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -48,17 +54,37 @@ export default function Progress() {
             .order('measurement_date', { ascending: true })
         ]);
         
+        if (logsRes.error) throw logsRes.error;
+        if (measurementsRes.error) throw measurementsRes.error;
+
         if (logsRes.data) setLogs(logsRes.data);
         setGoalObj(goalsRes);
         if (measurementsRes.data) setMeasurements(measurementsRes.data);
-      } catch (err) {
+      } catch (err: any) {
         console.error("Unexpected error in fetchData:", err);
+        setError(err.message || "Failed to load data");
       } finally {
         setLoading(false);
       }
     };
     fetchData();
   }, []);
+
+  if (error) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.appContainer}>
+          <div className={styles.header}>
+            <h1 className={styles.title}>Progress</h1>
+          </div>
+          <div className={styles.emptyState}>
+            <p style={{ color: '#f87171' }}>Error: {error}</p>
+            <button onClick={() => window.location.reload()} className={styles.primaryActionBtn} style={{ marginTop: '1rem', padding: '0.5rem 1rem' }}>Retry</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (

@@ -6,13 +6,18 @@ import styles from "./page.module.css";
 import { supabase } from "../lib/supabase";
 import { fetchUserGoals } from "../lib/goals";
 
-const getLocalDateString = () => {
-  const dateStr = new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
-  const localDate = new Date(dateStr);
-  const y = localDate.getFullYear();
-  const m = String(localDate.getMonth() + 1).padStart(2, '0');
-  const d = String(localDate.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
+const getLocalDateString = (d: Date = new Date()) => {
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  });
+  const parts = formatter.formatToParts(d);
+  const y = parts.find(p => p.type === 'year')?.value;
+  const m = parts.find(p => p.type === 'month')?.value;
+  const dNum = parts.find(p => p.type === 'day')?.value;
+  return `${y}-${m}-${dNum}`;
 };
 
 const parseLogDate = (dateStr: string) => {
