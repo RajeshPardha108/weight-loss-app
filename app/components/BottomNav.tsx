@@ -12,22 +12,42 @@ export default function BottomNav() {
 
   return (
     <div className={styles.navContainer}>
-      <div className={styles.mobileNav}>
-        <Link href="/" className={`${styles.navItem} ${pathname === '/' ? styles.active : ''}`}>
-          <svg className={styles.navIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-            <polyline points="9 22 9 12 15 12 15 22"></polyline>
-          </svg>
-          Home
-        </Link>
+      <div className={styles.navWrapper}>
+        <div className={styles.mobileNav}>
+          <Link href="/" className={`${styles.navItem} ${pathname === '/' ? styles.active : ''}`}>
+            <svg className={styles.navIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+              <polyline points="9 22 9 12 15 12 15 22"></polyline>
+            </svg>
+            Home
+          </Link>
 
-        <Link href="/journal" className={`${styles.navItem} ${pathname?.startsWith('/journal') ? styles.active : ''}`}>
-          <svg className={styles.navIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
-            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
-          </svg>
-          Journal
-        </Link>
+          <Link href="/journal" className={`${styles.navItem} ${pathname?.startsWith('/journal') ? styles.active : ''}`}>
+            <svg className={styles.navIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+            </svg>
+            Journal
+          </Link>
+
+          <div className={styles.fabSpacer}></div>
+
+          <Link href="/progress" className={`${styles.navItem} ${pathname?.startsWith('/progress') ? styles.active : ''}`}>
+            <svg className={styles.navIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+            </svg>
+            Progress
+          </Link>
+
+          <Link href="/more" className={`${styles.navItem} ${pathname?.startsWith('/more') ? styles.active : ''}`}>
+            <svg className={styles.navIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="1"></circle>
+              <circle cx="19" cy="12" r="1"></circle>
+              <circle cx="5" cy="12" r="1"></circle>
+            </svg>
+            More
+          </Link>
+        </div>
 
         <div className={styles.fabContainer}>
           <Link href="/log" className={styles.fab}>
@@ -37,22 +57,6 @@ export default function BottomNav() {
             </svg>
           </Link>
         </div>
-
-        <Link href="/progress" className={`${styles.navItem} ${pathname?.startsWith('/progress') ? styles.active : ''}`}>
-          <svg className={styles.navIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
-          </svg>
-          Progress
-        </Link>
-
-        <Link href="/more" className={`${styles.navItem} ${pathname?.startsWith('/more') ? styles.active : ''}`}>
-          <svg className={styles.navIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="1"></circle>
-            <circle cx="19" cy="12" r="1"></circle>
-            <circle cx="5" cy="12" r="1"></circle>
-          </svg>
-          More
-        </Link>
       </div>
     </div>
   );

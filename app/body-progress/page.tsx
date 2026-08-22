@@ -2,16 +2,18 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import styles from "./page.module.css";
 import { supabase } from "../../lib/supabase";
 import BodyVisualizer from "./BodyVisualizer";
 import MeasurementCharts from "./MeasurementCharts";
 
 export default function BodyProgress() {
+  const router = useRouter();
   const [logs, setLogs] = useState<any[]>([]);
   const [measurements, setMeasurements] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showAllHistory, setShowAllHistory] = useState(false);
+  const [activeTab, setActiveTab] = useState("overview");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -27,12 +29,8 @@ export default function BodyProgress() {
             .order('measurement_date', { ascending: false }) // latest first
         ]);
         
-        if (logsRes.data) {
-          setLogs(logsRes.data);
-        }
-        if (measurementsRes.data) {
-          setMeasurements(measurementsRes.data);
-        }
+        if (logsRes.data) setLogs(logsRes.data);
+        if (measurementsRes.data) setMeasurements(measurementsRes.data);
       } catch (err) {
         console.error(err);
       } finally {
@@ -45,17 +43,17 @@ export default function BodyProgress() {
   if (loading) {
     return (
       <div className={styles.container}>
-        <div className={styles.mobileView}>
+        <div className={styles.appContainer}>
           <div className={styles.header}>
             <h1 className={styles.title}>Body Progress</h1>
           </div>
-          <div style={{ padding: '2rem', textAlign: 'center', color: '#94a3b8' }}>Loading...</div>
+          <div className={styles.emptyState}>Loading...</div>
         </div>
       </div>
     );
   }
 
-  // Derived data for summaries
+  // Derived data
   const weightLogs = logs.filter(l => l.weight_kg !== null);
   const latestWeight = weightLogs.length > 0 ? weightLogs[weightLogs.length - 1].weight_kg : null;
   const startWeight = weightLogs.length > 0 ? weightLogs[0].weight_kg : null;
@@ -96,203 +94,160 @@ export default function BodyProgress() {
 
   return (
     <div className={styles.container}>
-      <div className={styles.mobileView}>
+      <div className={styles.appContainer}>
+        
         <div className={styles.header}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h1 className={styles.title}>Body Progress</h1>
-            <Link href="/progress" style={{ color: '#38bdf8', fontSize: '0.875rem', textDecoration: 'none' }}>
-              ← Progress
-            </Link>
-          </div>
+          <h1 className={styles.title}>Body Progress</h1>
         </div>
 
-        <div className={styles.content}>
-          {measurements.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '2rem 1rem' }}>
-              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📏</div>
-              <h2 style={{ fontSize: '1.25rem', color: '#f8fafc', marginBottom: '0.5rem' }}>No body measurements recorded yet.</h2>
-              <p style={{ color: '#94a3b8', fontSize: '0.875rem', marginBottom: '2rem' }}>
-                Measure yourself whenever convenient. Weekly or occasional measurements are enough.
-              </p>
-              <Link href="/measurements" className={styles.linkButton}>
-                + Add Measurement
-              </Link>
+        {/* SEGMENTED CONTROL */}
+        <div className={styles.segmentedControl}>
+          <button className={`${styles.segmentBtn} ${activeTab === 'overview' ? styles.active : ''}`} onClick={() => setActiveTab('overview')}>Overview</button>
+          <button className={`${styles.segmentBtn} ${activeTab === 'measurements' ? styles.active : ''}`} onClick={() => setActiveTab('measurements')}>Measurements</button>
+          <button className={`${styles.segmentBtn} ${activeTab === 'charts' ? styles.active : ''}`} onClick={() => setActiveTab('charts')}>Charts</button>
+          <button className={`${styles.segmentBtn} ${activeTab === 'photos' ? styles.active : ''}`} onClick={() => setActiveTab('photos')}>Photos</button>
+        </div>
+
+        {measurements.length === 0 ? (
+          <div className={styles.emptyState}>
+            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📏</div>
+            <h2 style={{ fontSize: '1.25rem', color: '#f8fafc', marginBottom: '0.5rem' }}>No body measurements recorded yet.</h2>
+            <p style={{ color: '#94a3b8', fontSize: '0.875rem', marginBottom: '2rem' }}>
+              Measure yourself whenever convenient.
+            </p>
+            <Link href="/measurements" className={styles.primaryActionBtn}>+ Add Measurement</Link>
+          </div>
+        ) : (
+          <div className={styles.gridDesktop}>
+            
+            {/* LEFT COLUMN */}
+            <div className={styles.colLeft}>
+              <div className={styles.visualizerCard}>
+                <div className={styles.sectionHeader} style={{ padding: 0, marginBottom: '1rem', display: 'flex', justifyContent: 'space-between' }}>
+                  <span>Body View</span>
+                  <div className={styles.dateSelector}>Latest</div>
+                </div>
+                <div className={styles.visualizerWrapper}>
+                  <BodyVisualizer measurements={[...measurements].reverse()} />
+                </div>
+                
+                <div className={styles.compositionControls}>
+                  <button className={`${styles.compBtn} ${styles.active}`}>Front</button>
+                  <button className={styles.compBtn}>Back</button>
+                </div>
+              </div>
             </div>
-          ) : (
-            <>
+
+            {/* RIGHT COLUMN */}
+            <div className={styles.colRight}>
+              
               {/* Summary Cards */}
+              <div className={styles.sectionHeader}>Current Metrics</div>
               <div className={styles.summaryGrid}>
                 <div className={styles.summaryCard}>
                   <div className={styles.cardLabel}>Weight</div>
-                  <div>
+                  <div className={styles.cardValueRow}>
                     <span className={styles.cardValue}>{latestWeight !== null ? latestWeight : '—'}</span>
                     <span className={styles.cardUnit}>kg</span>
                   </div>
                 </div>
                 <div className={styles.summaryCard}>
                   <div className={styles.cardLabel}>Waist</div>
-                  <div>
+                  <div className={styles.cardValueRow}>
                     <span className={styles.cardValue}>{latestMeas?.waist_cm || '—'}</span>
                     <span className={styles.cardUnit}>cm</span>
                   </div>
                 </div>
                 <div className={styles.summaryCard}>
                   <div className={styles.cardLabel}>Abdomen</div>
-                  <div>
+                  <div className={styles.cardValueRow}>
                     <span className={styles.cardValue}>{latestMeas?.abdomen_cm || '—'}</span>
                     <span className={styles.cardUnit}>cm</span>
                   </div>
                 </div>
                 <div className={styles.summaryCard}>
                   <div className={styles.cardLabel}>Hip</div>
-                  <div>
+                  <div className={styles.cardValueRow}>
                     <span className={styles.cardValue}>{latestMeas?.hip_cm || '—'}</span>
                     <span className={styles.cardUnit}>cm</span>
                   </div>
                 </div>
               </div>
 
-              {/* Body Visualizer */}
-              <div style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.05)', borderRadius: '1.25rem', padding: '1rem' }}>
-                <h2 className={styles.sectionTitle}>Body View</h2>
-                {/* Reversing measurements so visualizer gets chronological oldest-to-newest if it expects that, 
-                    but the original expects an array where we just take the last element for latest. 
-                    Wait, let's reverse them so the visualizer sees the latest at the end. */}
-                <BodyVisualizer measurements={[...measurements].reverse()} />
-              </div>
+              {/* Change Since Start */}
+              {(weightChange !== null || waistChange !== null || abdomenChange !== null || hipChange !== null) && (
+                <>
+                  <div className={styles.sectionHeader}>Since Start</div>
+                  <div className={styles.historyCard}>
+                    <div className={styles.historyGrid}>
+                      {weightChange !== null && (
+                        <div className={styles.metricRow}>
+                          <span className={styles.metricName}>Weight</span>
+                          <span className={`${styles.metricDelta} ${getDeltaClass(weightChange)}`}>{getDeltaStr(weightChange)} kg</span>
+                        </div>
+                      )}
+                      {waistChange !== null && (
+                        <div className={styles.metricRow}>
+                          <span className={styles.metricName}>Waist</span>
+                          <span className={`${styles.metricDelta} ${getDeltaClass(waistChange)}`}>{getDeltaStr(waistChange)} cm</span>
+                        </div>
+                      )}
+                      {abdomenChange !== null && (
+                        <div className={styles.metricRow}>
+                          <span className={styles.metricName}>Abdomen</span>
+                          <span className={`${styles.metricDelta} ${getDeltaClass(abdomenChange)}`}>{getDeltaStr(abdomenChange)} cm</span>
+                        </div>
+                      )}
+                      {hipChange !== null && (
+                        <div className={styles.metricRow}>
+                          <span className={styles.metricName}>Hip</span>
+                          <span className={`${styles.metricDelta} ${getDeltaClass(hipChange)}`}>{getDeltaStr(hipChange)} cm</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
 
               {/* Trends Chart */}
-              <div>
-                <h2 className={styles.sectionTitle}>Trends</h2>
-                {/* MeasurementCharts expects oldest-to-newest */}
+              <div className={styles.sectionHeader}>Trends</div>
+              <div className={styles.chartCard}>
                 <MeasurementCharts measurements={[...measurements].reverse()} />
               </div>
 
-              {/* Change Since Start */}
-              {(weightChange !== null || waistChange !== null || abdomenChange !== null || hipChange !== null) && (
-                <div style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.05)', borderRadius: '1.25rem', padding: '1.25rem' }}>
-                  <h2 className={styles.sectionTitle}>Since Start</h2>
-                  <div className={styles.historyGrid}>
-                    {weightChange !== null && (
-                      <div className={styles.metricRow}>
-                        <span className={styles.metricName}>Weight</span>
-                        <div>
-                          <span className={`${styles.metricDelta} ${getDeltaClass(weightChange)}`}>{getDeltaStr(weightChange)} kg</span>
-                        </div>
-                      </div>
-                    )}
-                    {waistChange !== null && (
-                      <div className={styles.metricRow}>
-                        <span className={styles.metricName}>Waist</span>
-                        <div>
-                          <span className={`${styles.metricDelta} ${getDeltaClass(waistChange)}`}>{getDeltaStr(waistChange)} cm</span>
-                        </div>
-                      </div>
-                    )}
-                    {abdomenChange !== null && (
-                      <div className={styles.metricRow}>
-                        <span className={styles.metricName}>Abdomen</span>
-                        <div>
-                          <span className={`${styles.metricDelta} ${getDeltaClass(abdomenChange)}`}>{getDeltaStr(abdomenChange)} cm</span>
-                        </div>
-                      </div>
-                    )}
-                    {hipChange !== null && (
-                      <div className={styles.metricRow}>
-                        <span className={styles.metricName}>Hip</span>
-                        <div>
-                          <span className={`${styles.metricDelta} ${getDeltaClass(hipChange)}`}>{getDeltaStr(hipChange)} cm</span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Measurement History */}
-              <div>
-                <h2 className={styles.sectionTitle}>Measurement History</h2>
-                <div className={styles.historyList}>
-                  {(showAllHistory ? measurements : measurements.slice(0, 5)).map((m, i) => {
-                    // the index i is relative to the slice, but we need to find prev based on the real measurements array
-                    // so we find the real index first
-                    const realIndex = measurements.findIndex(x => x.id === m.id);
-                    // find the previous valid measurement for each metric
-                    const getPrev = (key: string) => {
-                      for (let j = realIndex + 1; j < measurements.length; j++) {
-                        if (measurements[j][key] !== null) return measurements[j][key];
-                      }
-                      return null;
-                    };
-
-                    const dateObj = new Date(m.measurement_date);
-                    const formattedDate = dateObj.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-
-                    const metrics = [
-                      { key: 'waist_cm', label: 'Waist' },
-                      { key: 'abdomen_cm', label: 'Abdomen' },
-                      { key: 'hip_cm', label: 'Hip' },
-                      { key: 'chest_cm', label: 'Chest' },
-                      { key: 'thigh_cm', label: 'Thigh' },
-                      { key: 'upper_arm_cm', label: 'Upper Arm' },
-                      { key: 'neck_cm', label: 'Neck' }
-                    ];
-
-                    const recordedMetrics = metrics.filter(met => m[met.key] !== null);
-                    if (recordedMetrics.length === 0) return null;
-
-                    return (
-                      <div key={m.id} className={styles.historyCard}>
-                        <div className={styles.historyDate}>{formattedDate}</div>
-                        <div className={styles.historyGrid}>
-                          {recordedMetrics.map(met => {
-                            const val = m[met.key];
-                            const prev = getPrev(met.key);
-                            const diff = calcChange(val, prev);
-                            return (
-                              <div key={met.key} className={styles.metricRow}>
-                                <span className={styles.metricName}>{met.label}</span>
-                                <div>
-                                  <span className={styles.metricValue}>{val} cm</span>
-                                  {diff !== null && (
-                                    <span className={`${styles.metricDelta} ${getDeltaClass(diff)}`}>{getDeltaStr(diff)}</span>
-                                  )}
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  })}
-                  {!showAllHistory && measurements.length > 5 && (
-                    <button 
-                      onClick={() => setShowAllHistory(true)}
-                      style={{
-                        background: 'transparent',
-                        border: '1px solid rgba(56, 189, 248, 0.3)',
-                        color: '#38bdf8',
-                        padding: '0.75rem',
-                        borderRadius: '1rem',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        marginTop: '0.5rem',
-                        width: '100%'
-                      }}
-                    >
-                      View More History
-                    </button>
-                  )}
-                </div>
+              {/* Motivation */}
+              <div className={styles.motivationCard}>
+                <div className={styles.quoteMark}>"</div>
+                <p className={styles.quoteText}>Your body is a reflection of your lifestyle. Keep pushing, the results are showing.</p>
               </div>
 
-              <div style={{ marginTop: '1rem' }}>
-                <Link href="/measurements" className={styles.linkButton}>
-                  + Add / Update Measurements
-                </Link>
-              </div>
-            </>
-          )}
+            </div>
+          </div>
+        )}
+
+        {/* BOTTOM NAV */}
+        <div className={styles.bottomNavWrapper}>
+          <div className={styles.bottomNav}>
+            <Link href="/" className={styles.navItem}>
+              <span className={styles.navIcon}>🏠</span>
+              <span className={styles.navLabel}>Home</span>
+            </Link>
+            <Link href="/progress" className={styles.navItem}>
+              <span className={styles.navIcon}>📈</span>
+              <span className={styles.navLabel}>Progress</span>
+            </Link>
+            <Link href="/log" className={styles.navItemCenter}>
+              <div className={styles.navPlus}>+</div>
+            </Link>
+            <Link href="/body-progress" className={`${styles.navItem} ${styles.active}`}>
+              <span className={styles.navIcon}>🧍‍♂️</span>
+              <span className={styles.navLabel}>Body</span>
+            </Link>
+            <Link href="/journal" className={styles.navItem}>
+              <span className={styles.navIcon}>📝</span>
+              <span className={styles.navLabel}>Journal</span>
+            </Link>
+          </div>
         </div>
       </div>
     </div>

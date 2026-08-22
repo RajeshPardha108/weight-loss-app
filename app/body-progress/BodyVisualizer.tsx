@@ -22,21 +22,16 @@ export default function BodyVisualizer({ measurements }: { measurements: any[] }
       
       <div style={{ position: 'relative', width: '250px', height: '400px' }}>
         <svg width="100%" height="100%" viewBox="-30 0 160 200" preserveAspectRatio="xMidYMid meet">
-          {/* Simple abstracted human silhouette */}
-          <path 
-            d="M50 15 C55 15, 59 19, 59 24 C59 29, 55 33, 50 33 C45 33, 41 29, 41 24 C41 19, 45 15, 50 15 Z" 
-            fill="rgba(56, 189, 248, 0.2)" stroke="#38bdf8" strokeWidth="1"
+          {/* Premium Realistic Body Visual */}
+          <image 
+            href="/body-silhouette.jpg" 
+            x="-10" 
+            y="-10" 
+            width="120" 
+            height="210" 
+            preserveAspectRatio="xMidYMid meet"
+            style={{ mixBlendMode: 'lighten', opacity: 0.95 }}
           />
-          {/* Neck */}
-          <path d="M47 33 L53 33 L54 40 L46 40 Z" fill="rgba(56, 189, 248, 0.2)" stroke="#38bdf8" strokeWidth="1"/>
-          {/* Torso */}
-          <path d="M35 45 C40 40, 60 40, 65 45 L62 90 C62 95, 38 95, 38 90 Z" fill="rgba(56, 189, 248, 0.2)" stroke="#38bdf8" strokeWidth="1"/>
-          {/* Arms */}
-          <path d="M35 45 C30 50, 25 70, 27 90" fill="none" stroke="#38bdf8" strokeWidth="3" strokeLinecap="round"/>
-          <path d="M65 45 C70 50, 75 70, 73 90" fill="none" stroke="#38bdf8" strokeWidth="3" strokeLinecap="round"/>
-          {/* Legs */}
-          <path d="M40 92 C38 120, 42 180, 42 180" fill="none" stroke="#38bdf8" strokeWidth="4" strokeLinecap="round"/>
-          <path d="M60 92 C62 120, 58 180, 58 180" fill="none" stroke="#38bdf8" strokeWidth="4" strokeLinecap="round"/>
           
           {/* Markers */}
           {/* Neck */}
