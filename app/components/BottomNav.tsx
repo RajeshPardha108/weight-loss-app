@@ -37,13 +37,12 @@ export default function BottomNav() {
             Progress
           </Link>
 
-          <Link href="/more" className={`${styles.navItem} ${pathname?.startsWith('/more') ? styles.active : ''}`}>
+          <Link href="/body-progress" className={`${styles.navItem} ${pathname?.startsWith('/body-progress') ? styles.active : ''}`}>
             <svg className={styles.navIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="1"></circle>
-              <circle cx="19" cy="12" r="1"></circle>
-              <circle cx="5" cy="12" r="1"></circle>
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
             </svg>
-            More
+            Body
           </Link>
         </div>
       </div>

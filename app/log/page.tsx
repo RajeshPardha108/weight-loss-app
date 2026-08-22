@@ -57,6 +57,15 @@ function LogMenuContent() {
             <div className={styles.chevron}>›</div>
           </Link>
 
+          <Link href={`/log/steps${querySuffix}`} className={styles.menuItem}>
+            <div className={styles.iconWrapper}>👟</div>
+            <div className={styles.textWrapper}>
+              <h3 className={styles.itemTitle}>Steps</h3>
+              <p className={styles.itemDesc}>Total daily steps</p>
+            </div>
+            <div className={styles.chevron}>›</div>
+          </Link>
+
           <Link href={`/measurements${querySuffix}`} className={styles.menuItem}>
             <div className={styles.iconWrapper}>📏</div>
             <div className={styles.textWrapper}>
