@@ -9,11 +9,9 @@ import BodyVisualizer from "./BodyVisualizer";
 import MeasurementCharts from "./MeasurementCharts";
 
 export default function BodyProgress() {
-  const router = useRouter();
   const [logs, setLogs] = useState<any[]>([]);
   const [measurements, setMeasurements] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("overview");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -96,8 +94,20 @@ export default function BodyProgress() {
     <div className={styles.container}>
       <div className={styles.appContainer}>
         
-        <div className={styles.header}>
+        <div className={styles.header} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h1 className={styles.title}>Body Progress</h1>
+          <Link href="/measurements" style={{ 
+            background: 'rgba(56, 189, 248, 0.1)', 
+            color: '#38bdf8', 
+            fontSize: '0.875rem', 
+            textDecoration: 'none', 
+            fontWeight: 600,
+            padding: '0.5rem 1rem',
+            borderRadius: '2rem',
+            border: '1px solid rgba(56, 189, 248, 0.2)'
+          }}>
+            + Add
+          </Link>
         </div>
 
         {measurements.length === 0 ? (
@@ -114,19 +124,8 @@ export default function BodyProgress() {
             
             {/* LEFT COLUMN */}
             <div className={styles.colLeft}>
-              <div className={styles.visualizerCard}>
-                <div className={styles.sectionHeader} style={{ padding: 0, marginBottom: '1rem', display: 'flex', justifyContent: 'space-between' }}>
-                  <span>Body View</span>
-                  <div className={styles.dateSelector}>Latest</div>
-                </div>
-                <div className={styles.visualizerWrapper}>
-                  <BodyVisualizer measurements={[...measurements].reverse()} />
-                </div>
-                
-                <div className={styles.compositionControls}>
-                  <button className={`${styles.compBtn} ${styles.active}`}>Front</button>
-                  <button className={styles.compBtn}>Back</button>
-                </div>
+              <div className={styles.visualizerCard} style={{ padding: 0, background: 'transparent', boxShadow: 'none', border: 'none' }}>
+                <BodyVisualizer measurements={[...measurements].reverse()} />
               </div>
             </div>
 
@@ -209,7 +208,7 @@ export default function BodyProgress() {
 
               {/* Motivation */}
               <div className={styles.motivationCard}>
-                <div className={styles.quoteMark}>"</div>
+                <div className={styles.quoteMark}>&quot;</div>
                 <p className={styles.quoteText}>Your body is a reflection of your lifestyle. Keep pushing, the results are showing.</p>
               </div>
 

@@ -118,9 +118,9 @@ function MeasurementsPageContent() {
               onChange={(e) => setSelectedDate(e.target.value)}
             />
           </div>
-          <Link href="/log" className={styles.backLink}>
+          <button onClick={() => window.history.back()} className={styles.backLink} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#38bdf8' }}>
             ← Back
-          </Link>
+          </button>
         </div>
 
         <div className={styles.form}>
