@@ -25,7 +25,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-screen bg-black flex justify-center">
-        <div className="w-full max-w-[430px] min-h-screen bg-[#0f172a] relative pb-20 shadow-2xl mx-auto overflow-x-hidden text-slate-200">
+        <div className="w-full max-w-[430px] md:max-w-[1200px] min-h-screen bg-[#0f172a] relative pb-20 shadow-2xl mx-auto overflow-x-hidden text-slate-200">
           {children}
           <BottomNav />
         </div>
