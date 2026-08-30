@@ -36,6 +36,7 @@ export interface FoodEntry {
   meal_type: string | null;
   quantity_g: number | null;
   servings: number | null;
+  custom_nutrition?: Partial<Omit<DailyNutrition, 'date'>>;
 }
 
 export interface Food {
@@ -161,6 +162,17 @@ export interface DailyNutrition {
   carbohydrates: number;
   fat: number;
   fiber: number;
+  saturated_fat: number;
+  sodium: number;
+  potassium: number;
+  calcium: number;
+  iron: number;
+  magnesium: number;
+  zinc: number;
+  vitamin_c: number;
+  vitamin_d: number;
+  vitamin_b12: number;
+  folate: number;
 }
 
 export interface NutritionAnalytics {
@@ -171,6 +183,17 @@ export interface NutritionAnalytics {
     carbohydrates: number | null;
     fat: number | null;
     fiber: number | null;
+    saturated_fat: number | null;
+    sodium: number | null;
+    potassium: number | null;
+    calcium: number | null;
+    iron: number | null;
+    magnesium: number | null;
+    zinc: number | null;
+    vitamin_c: number | null;
+    vitamin_d: number | null;
+    vitamin_b12: number | null;
+    folate: number | null;
   };
   recentDays: DailyNutrition[];  // last 7 days with data
 }

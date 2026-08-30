@@ -62,6 +62,8 @@ export interface AIProgressContext {
 export interface AIProviderRequest {
   systemPrompt: string;
   userPrompt: string;
+  responseFormat?: 'json' | 'text';
+  responseSchema?: Record<string, any>;
 }
 
 export interface AIProviderResponse {
@@ -79,4 +81,26 @@ export interface AIProvider {
    * Generates a response from the AI model based on the given request.
    */
   generate(request: AIProviderRequest): Promise<AIProviderResponse>;
+}
+
+// ============================================================
+// Food Parsing Types
+// ============================================================
+
+export type FoodInputState = 'raw' | 'cooked' | 'prepared' | 'packaged' | 'unspecified';
+
+export type FoodQuantityUnit = 'g' | 'kg' | 'ml' | 'l' | 'piece' | 'serving' | 'tablespoon' | 'teaspoon' | 'cup' | 'bowl' | 'other';
+
+export interface ParsedFoodItem {
+  food: string;
+  quantity: number | null;
+  unit: FoodQuantityUnit | null;
+  state: FoodInputState;
+  ambiguous?: boolean;
+}
+
+export interface FoodParseResult {
+  items: ParsedFoodItem[];
+  needsClarification: boolean;
+  clarificationQuestions?: string[];
 }
