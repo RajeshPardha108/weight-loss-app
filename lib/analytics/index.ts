@@ -41,6 +41,14 @@ export { computeMealAnalytics } from './mealAnalytics';
 export { computeMoodAnalytics } from './moodAnalytics';
 export { computeBodyMeasurementAnalytics } from './bodyMeasurementAnalytics';
 export { computeNutritionAnalytics } from './nutritionAnalytics';
+export {
+  computeSmartAnalytics,
+  getAnchorTimeMs,
+  type SingleGoalForecast,
+  type PlateauDetection,
+  type WeeklyComparison,
+  type SmartAnalyticsReport,
+} from './forecasting';
 
 // Import for orchestrator
 import { DailyLog, BodyMeasurement, FoodEntry, Food, Recipe, RecipeIngredient, AnalyticsSnapshot } from './types';

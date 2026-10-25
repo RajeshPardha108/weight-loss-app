@@ -25,6 +25,7 @@ export default function BodyVisualizer({ measurements }: { measurements: any[] }
           {/* Premium Realistic Body Visual */}
           <image 
             href="/body-silhouette.jpg" 
+            xlinkHref="/body-silhouette.jpg"
             x="-10" 
             y="-10" 
             width="120" 

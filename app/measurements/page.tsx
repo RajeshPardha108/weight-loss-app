@@ -5,19 +5,27 @@ import Link from "next/link";
 import styles from "./page.module.css";
 import { supabase } from "../../lib/supabase";
 
-const getLocalDateString = () => {
-  const dateStr = new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
-  const localDate = new Date(dateStr);
-  const y = localDate.getFullYear();
-  const m = String(localDate.getMonth() + 1).padStart(2, '0');
-  const d = String(localDate.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
+import { Suspense } from "react";
+import { useSearchParams } from "next/navigation";
+
+const getLocalDateString = (d: Date = new Date()) => {
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  const parts = formatter.formatToParts(d);
+  const y = parts.find((p) => p.type === "year")?.value;
+  const m = parts.find((p) => p.type === "month")?.value;
+  const dNum = parts.find((p) => p.type === "day")?.value;
+  return `${y}-${m}-${dNum}`;
 };
 
-import { Suspense } from "react";
-
 function MeasurementsPageContent() {
-  const [selectedDate, setSelectedDate] = useState(getLocalDateString());
+  const searchParams = useSearchParams();
+  const dateParam = searchParams?.get("date");
+  const [selectedDate, setSelectedDate] = useState(dateParam || getLocalDateString());
   const [logId, setLogId] = useState<number | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [statusMsg, setStatusMsg] = useState({ type: "", text: "" });
@@ -81,11 +89,24 @@ function MeasurementsPageContent() {
         upper_arm_cm: upperArm ? parseFloat(upperArm) : null,
       };
 
-      if (logId) {
+      let targetId = logId;
+      if (!targetId) {
+        const { data: existing } = await supabase
+          .from('body_measurements')
+          .select('id')
+          .eq('measurement_date', selectedDate)
+          .maybeSingle();
+        if (existing?.id) {
+          targetId = existing.id;
+          setLogId(existing.id);
+        }
+      }
+
+      if (targetId) {
         const { error } = await supabase
           .from('body_measurements')
           .update(payload)
-          .eq('id', logId);
+          .eq('id', targetId);
         if (error) throw error;
       } else {
         const { data, error } = await supabase

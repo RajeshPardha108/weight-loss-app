@@ -88,7 +88,7 @@ export class DeterministicFoodParser {
     while ((match = pattern.exec(line)) !== null) {
       const rawQty = match[1].trim();
       const rawUnitToken = (match[2] || '').trim();
-      let rawFoodPart = (match[3] || '').trim();
+      const rawFoodPart = (match[3] || '').trim();
 
       if (!rawFoodPart && !rawUnitToken) continue;
 

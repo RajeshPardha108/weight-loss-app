@@ -11,11 +11,8 @@ export async function fetchUserGoals() {
       .eq('id', 1)
       .maybeSingle();
 
-    if (error) {
-      console.error("Error fetching user settings:", error);
-    }
-
-    const finalGoal = data?.goal_weight_kg ? Number(data.goal_weight_kg) : DEFAULT_FINAL_GOAL;
+    const finalGoal =
+      !error && data?.goal_weight_kg ? Number(data.goal_weight_kg) : DEFAULT_FINAL_GOAL;
     
     return {
       activeGoal: CURRENT_ACTIVE_GOAL,

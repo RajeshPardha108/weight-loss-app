@@ -65,12 +65,27 @@ export function filterLastNDays<T>(
   n: number,
   dateExtractor: (item: T) => string
 ): T[] {
+  if (items.length === 0) return [];
   const today = getLocalDateString();
   const todayMs = parseLogDate(today).getTime();
   const msInDay = 24 * 60 * 60 * 1000;
-  const cutoffMs = todayMs - ((n - 1) * msInDay);
+
+  let latestMs = -Infinity;
+  for (const item of items) {
+    const dStr = dateExtractor(item);
+    if (dStr) {
+      const t = parseLogDate(dStr).getTime();
+      if (t > latestMs) {
+        latestMs = t;
+      }
+    }
+  }
+  if (!Number.isFinite(latestMs)) latestMs = todayMs;
+  // Anchor to today if data is within the last 30 days, otherwise anchor to latest entry
+  const anchorMs = (todayMs - latestMs <= 30 * msInDay && todayMs >= latestMs) ? todayMs : latestMs;
+  const cutoffMs = anchorMs - ((n - 1) * msInDay);
   return items.filter(item => {
     const itemMs = parseLogDate(dateExtractor(item)).getTime();
-    return itemMs >= cutoffMs;
+    return itemMs >= cutoffMs && itemMs <= anchorMs;
   });
 }

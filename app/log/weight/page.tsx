@@ -67,14 +67,13 @@ function WeightLogContent() {
         weight_after_toilet: weightAfter ? parseFloat(weightAfter) : null,
       };
 
-      if (logId) {
-        const { error } = await supabase.from('daily_logs').update(payload).eq('id', logId);
-        if (error) throw error;
-      } else {
-        const { data, error } = await supabase.from('daily_logs').insert([payload]).select().single();
-        if (error) throw error;
-        if (data) setLogId(data.id);
-      }
+      const { data, error } = await supabase
+        .from('daily_logs')
+        .upsert(payload, { onConflict: 'log_date' })
+        .select()
+        .single();
+      if (error) throw error;
+      if (data) setLogId(data.id);
 
       setStatusMsg({ type: "success", text: "Saved!" });
     } catch (err: any) {

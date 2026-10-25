@@ -1,25 +1,43 @@
 .container {
-  min-height: 100vh;
-  background: #090e17; /* Deep futuristic navy/near-black */
+  min-height: 100dvh;
+  width: 100%;
+  overflow-x: hidden;
+  background: #090e17;
   color: #f8fafc;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   display: flex;
   justify-content: center;
+  font-variant-numeric: tabular-nums;
 }
 
 .appContainer {
   width: 100%;
   max-width: 1200px;
+  min-width: 0;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
   position: relative;
-  padding-bottom: 6rem;
+  padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+}
+
+.mobileView {
+  width: 100%;
+  max-width: 430px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  min-height: 100dvh;
+  padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
 }
 
 /* Header */
 .header {
-  padding: 2.5rem 1.5rem 2rem;
+  padding-top: max(1.5rem, calc(1rem + env(safe-area-inset-top, 0px)));
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+  padding-bottom: 1.25rem;
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
@@ -31,7 +49,7 @@
   position: absolute;
   bottom: 0; left: 1.5rem; right: 1.5rem;
   height: 1px;
-  background: linear-gradient(90deg, rgba(56, 189, 248, 0.5) 0%, rgba(56, 189, 248, 0) 100%);
+  background: linear-gradient(90deg, rgba(56, 189, 248, 0.4) 0%, rgba(56, 189, 248, 0) 100%);
 }
 
 .greeting h1 {
@@ -48,29 +66,55 @@
 }
 
 .dateBadge {
-  background: rgba(56, 189, 248, 0.1);
   color: #38bdf8;
-  border: 1px solid rgba(56, 189, 248, 0.2);
-  border-radius: 2rem;
-  padding: 0.5rem 1rem;
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+/* Toast Notification */
+.toastBanner {
+  margin: 0.75rem 1.5rem 0;
+  padding: 0.65rem 1rem;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  animation: fadeIn 0.15s ease-out;
+}
+
+.toastSuccess {
+  background: rgba(34, 197, 94, 0.14);
+  border: 1px solid rgba(74, 222, 128, 0.35);
+  color: #4ade80;
+}
+
+.toastError {
+  background: rgba(244, 63, 94, 0.15);
+  border: 1px solid rgba(251, 113, 133, 0.35);
+  color: #fb7185;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* Desktop Grid Layout */
 .gridDesktop {
-  padding: 1.5rem;
+  padding: 1.25rem 1.5rem;
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: 1.5rem;
 }
 
 @media (min-width: 768px) {
   .gridDesktop {
-    grid-template-columns: 1.2fr 1fr;
-    gap: 2.5rem;
+    grid-template-columns: 1.15fr 1fr;
+    gap: 2.25rem;
   }
 }
 
@@ -78,14 +122,15 @@
 .colLeft, .colRight {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1.25rem;
+  min-width: 0;
 }
 
 .sectionHeader {
-  font-size: 1.125rem;
+  font-size: 1.05rem;
   font-weight: 600;
   color: #f8fafc;
-  margin-bottom: -0.5rem;
+  margin-bottom: -0.35rem;
   padding: 0 0.25rem;
 }
 
@@ -95,35 +140,27 @@
   border: 1px solid rgba(56, 189, 248, 0.15);
   border-radius: 1.5rem;
   padding: 1.5rem;
-  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
   position: relative;
   overflow: hidden;
-}
-
-.heroCard::before {
-  content: '';
-  position: absolute;
-  top: -50px; left: -50px; right: 0; bottom: 0;
-  background: radial-gradient(circle at top left, rgba(56, 189, 248, 0.1), transparent 60%);
-  pointer-events: none;
 }
 
 .heroContent {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 1rem;
 }
 
 .heroLabel {
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   color: #94a3b8;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 0.5rem;
+  font-weight: 500;
+  margin-bottom: 0.35rem;
 }
 
 .heroWeight {
-  font-size: 3.5rem;
+  font-size: 3.25rem;
   font-weight: 800;
   color: #ffffff;
   line-height: 1;
@@ -137,22 +174,36 @@
   margin-left: 0.25rem;
 }
 
+.heroBadgeRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
 .trendPill {
   display: inline-block;
-  padding: 0.35rem 0.75rem;
-  border-radius: 2rem;
-  font-size: 0.75rem;
+  font-size: 0.78rem;
   font-weight: 600;
 }
 
 .trendGood {
-  background: rgba(34, 197, 94, 0.15);
   color: #4ade80;
 }
 
 .trendBad {
-  background: rgba(244, 63, 94, 0.15);
   color: #fb7185;
+}
+
+.paceText {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.paceText::before {
+  content: '· ';
+  margin-right: 0.2rem;
 }
 
 /* Circular Progress */
@@ -160,6 +211,7 @@
   position: relative;
   width: 90px;
   height: 90px;
+  flex-shrink: 0;
 }
 
 .circleText {
@@ -180,79 +232,71 @@
 .circleLabel {
   font-size: 0.65rem;
   color: #94a3b8;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
 }
 
 /* Goals Grid */
 .goalsGrid {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 1rem;
-}
-
-@media (min-width: 480px) {
-  .goalsGrid {
-    grid-template-columns: 1fr 1fr;
-  }
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
 }
 
 .goalCardActive, .goalCardFinal {
-  background: rgba(30, 41, 59, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 1.25rem;
-  padding: 1.25rem;
+  background: rgba(30, 41, 59, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 1rem;
+  padding: 0.75rem 0.85rem;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  transition: transform 0.2s;
-}
-
-.goalCardActive:hover, .goalCardFinal:hover {
-  background: rgba(30, 41, 59, 0.6);
+  gap: 0.5rem;
+  min-width: 0;
 }
 
 .goalHeaderRow {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
+  gap: 0.35rem;
 }
 
 .goalLabel {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: #94a3b8;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .goalTarget {
-  font-size: 1.125rem;
+  font-size: 0.88rem;
   font-weight: 700;
   color: #e2e8f0;
+  white-space: nowrap;
 }
 
 .goalRemaining {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.35rem;
 }
 
 .remainingVal {
-  font-size: 1.5rem;
+  font-size: 1.15rem;
   font-weight: 700;
   color: #38bdf8;
-  line-height: 1;
+  line-height: 1.1;
 }
 
 .remainingUnit {
-  font-size: 0.75rem;
+  font-size: 0.68rem;
   color: #64748b;
   font-weight: 500;
 }
 
 .miniProgressBar {
-  height: 6px;
-  background: rgba(0, 0, 0, 0.3);
+  height: 5px;
+  background: rgba(0, 0, 0, 0.35);
   border-radius: 3px;
   overflow: hidden;
 }
@@ -261,33 +305,109 @@
   height: 100%;
   background: linear-gradient(90deg, #38bdf8, #818cf8);
   border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+.forecastMeta {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.66rem;
+  color: #94a3b8;
+  margin-top: 0.05rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.forecastMeta strong {
+  color: #e2e8f0;
+  font-weight: 600;
 }
 
 .goalAchieved {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.35rem;
   background: rgba(34, 197, 94, 0.1);
-  padding: 0.75rem;
-  border-radius: 0.75rem;
+  padding: 0.45rem 0.6rem;
+  border-radius: 0.6rem;
   border: 1px solid rgba(34, 197, 94, 0.2);
 }
 
 .achievedIcon {
-  font-size: 1.25rem;
+  font-size: 1rem;
 }
 
 .achievedText {
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: #4ade80;
+}
+
+/* Plateau Alert Banner */
+.plateauCard {
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.28);
+  border-radius: 1.15rem;
+  padding: 1rem 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.plateauHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.plateauTitleWrap {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.plateauIcon {
+  color: #fbbf24;
+  flex-shrink: 0;
+}
+
+.plateauTitle {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #fde68a;
+}
+
+.plateauCoachLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #38bdf8;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.plateauCoachLink:hover {
+  text-decoration: underline;
+}
+
+.plateauDesc {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #cbd5e1;
+  line-height: 1.45;
 }
 
 /* Stats Strip */
 .statsStrip {
   display: flex;
-  background: rgba(30, 41, 59, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.03);
+  background: rgba(30, 41, 59, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: 1rem;
   padding: 1rem;
   align-items: center;
@@ -306,10 +426,8 @@
 }
 
 .statBoxLabel {
-  font-size: 0.65rem;
+  font-size: 0.7rem;
   color: #94a3b8;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
   margin-bottom: 0.25rem;
 }
 
@@ -319,37 +437,191 @@
   color: #f8fafc;
 }
 
-/* Motivation */
-.motivationCard {
-  background: linear-gradient(135deg, rgba(129, 140, 248, 0.1) 0%, rgba(56, 189, 248, 0.05) 100%);
-  border-left: 3px solid #818cf8;
-  border-radius: 0 1rem 1rem 0;
-  padding: 1.25rem 1.5rem;
-  position: relative;
+/* Weekly Check-In Summary Card */
+.weeklyCard {
+  background: rgba(30, 41, 59, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 1.25rem;
+  padding: 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
 }
 
-.quoteMark {
-  position: absolute;
-  top: 0.5rem; left: 0.75rem;
-  font-size: 3rem;
-  line-height: 1;
-  color: rgba(129, 140, 248, 0.2);
-  font-family: serif;
+.weeklyHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
 }
 
-.quoteText {
-  margin: 0;
-  font-size: 0.9rem;
-  line-height: 1.5;
+.weeklyTitle {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.weeklySub {
+  font-size: 0.74rem;
+  color: #94a3b8;
+  margin-top: 0.15rem;
+}
+
+.weeklyDaysCount {
+  font-size: 0.74rem;
+  color: #38bdf8;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.weeklyGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem;
+}
+
+.weeklyMetricBox {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 0.85rem;
+  padding: 0.75rem 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.weeklyMetricLabel {
+  font-size: 0.7rem;
+  color: #94a3b8;
+}
+
+.weeklyMetricVal {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.weeklyDelta {
+  font-size: 0.7rem;
+  font-weight: 500;
+}
+
+.deltaPositive {
+  color: #4ade80;
+}
+
+.deltaNeutral {
+  color: #94a3b8;
+}
+
+/* Natural Language / Voice Quick Log Card */
+.quickNlCard {
+  background: linear-gradient(145deg, rgba(30, 41, 59, 0.65) 0%, rgba(15, 23, 42, 0.85) 100%);
+  border: 1px solid rgba(56, 189, 248, 0.22);
+  border-radius: 1.25rem;
+  padding: 1rem 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.quickNlHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.quickNlTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.sparkleIcon {
+  color: #38bdf8;
+}
+
+.quickNlHint {
+  font-size: 0.72rem;
+  color: #94a3b8;
+}
+
+.quickNlForm {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.quickNlInput {
+  flex: 1;
+  min-width: 0;
+  background: rgba(9, 14, 23, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.75rem;
+  padding: 0.65rem 0.85rem;
+  color: #f8fafc;
+  font-size: 0.82rem;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.quickNlInput:focus {
+  border-color: #38bdf8;
+}
+
+.micBtn {
+  width: 40px;
+  height: 40px;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(30, 41, 59, 0.8);
   color: #cbd5e1;
-  font-style: italic;
-  position: relative;
-  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s;
 }
 
-/* Today's Log */
+.micBtn:hover {
+  border-color: #38bdf8;
+  color: #38bdf8;
+}
+
+.micActive {
+  background: rgba(244, 63, 94, 0.2);
+  border-color: #fb7185;
+  color: #fb7185;
+}
+
+.quickNlSubmit {
+  height: 40px;
+  padding: 0 1rem;
+  border-radius: 0.75rem;
+  border: none;
+  background: linear-gradient(135deg, #0284c7 0%, #38bdf8 100%);
+  color: #ffffff;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: opacity 0.15s;
+}
+
+.quickNlSubmit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Today's Log Interactive Cards */
 .editLink {
-  font-size: 0.875rem;
+  font-size: 0.82rem;
   color: #38bdf8;
   text-decoration: none;
   font-weight: 500;
@@ -363,49 +635,59 @@
   background: rgba(30, 41, 59, 0.4);
   border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: 1.25rem;
-  padding: 1.25rem;
+  padding: 1rem;
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 0.85rem;
 }
 
-.logGrid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 0.75rem;
+.logInteractiveList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
 }
 
-@media (min-width: 480px) {
-  .logGrid {
-    grid-template-columns: 1fr 1fr;
-  }
+.interactiveLogCard {
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 0.9rem;
+  padding: 0.75rem 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
 }
 
-.logItem {
+.interactiveTopRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.logInfoGroup {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  background: rgba(0, 0, 0, 0.2);
-  padding: 0.75rem 1rem;
-  border-radius: 0.75rem;
+  gap: 0.75rem;
+  min-width: 0;
 }
 
 .logIcon {
-  font-size: 1.5rem;
-  width: 40px;
-  height: 40px;
+  font-size: 1.3rem;
+  width: 38px;
+  height: 38px;
   display: flex;
   justify-content: center;
   align-items: center;
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.04);
   border-radius: 50%;
+  flex-shrink: 0;
 }
 
 .logLabel {
   font-size: 0.7rem;
   color: #94a3b8;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  font-weight: 500;
 }
 
 .logVal {
@@ -414,94 +696,203 @@
   color: #e2e8f0;
 }
 
-.primaryActionBtn {
-  background: linear-gradient(90deg, #38bdf8, #818cf8);
-  color: white;
-  text-align: center;
-  padding: 1rem;
-  border-radius: 1rem;
-  font-weight: 600;
-  text-decoration: none;
-  box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3);
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.primaryActionBtn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(56, 189, 248, 0.4);
-}
-
-/* Bottom Nav */
-.bottomNavWrapper {
-  position: fixed;
-  bottom: 0; left: 0; right: 0;
-  z-index: 50;
-  display: flex;
-  justify-content: center;
-  pointer-events: none;
-}
-
-.bottomNav {
-  pointer-events: auto;
-  width: 100%;
-  max-width: 430px;
-  background: rgba(15, 23, 42, 0.9);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
-  padding: 0.75rem 1.5rem calc(0.75rem + env(safe-area-inset-bottom));
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.navItem {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.25rem;
-  color: #64748b;
-  text-decoration: none;
-  font-size: 0.65rem;
+.targetPctText {
+  font-size: 0.78rem;
   font-weight: 500;
-  transition: color 0.2s;
-}
-
-.navItem:hover, .navItem.active {
   color: #38bdf8;
 }
 
-.navIcon {
-  font-size: 1.25rem;
-  filter: grayscale(100%) opacity(0.5);
-  transition: filter 0.2s;
+/* Target Progress Bars */
+.targetBarTrack {
+  height: 5px;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 3px;
+  overflow: hidden;
 }
 
-.navItem:hover .navIcon, .navItem.active .navIcon {
-  filter: none;
+.targetBarFillWater {
+  height: 100%;
+  background: linear-gradient(90deg, #0284c7, #38bdf8);
+  border-radius: 3px;
+  transition: width 0.25s ease;
 }
 
-.navItemCenter {
-  width: 50px;
-  height: 50px;
-  background: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
-  border-radius: 50%;
+.targetBarFillSteps {
+  height: 100%;
+  background: linear-gradient(90deg, #6366f1, #38bdf8);
+  border-radius: 3px;
+  transition: width 0.25s ease;
+}
+
+/* 1-Tap Quick Action Buttons */
+.quickBtnGroup {
   display: flex;
-  justify-content: center;
   align-items: center;
-  color: white;
-  text-decoration: none;
-  box-shadow: 0 4px 15px rgba(56, 189, 248, 0.4);
-  transform: translateY(-10px);
-  transition: transform 0.2s;
+  gap: 0.35rem;
+  flex-shrink: 0;
 }
 
-.navItemCenter:hover {
-  transform: translateY(-12px) scale(1.05);
-}
-
-.navPlus {
-  font-size: 2rem;
-  font-weight: 300;
+.tapBtnPrimary {
+  min-height: 34px;
+  padding: 0.35rem 0.55rem;
+  border-radius: 0.55rem;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  background: rgba(56, 189, 248, 0.12);
+  color: #38bdf8;
+  font-size: 0.75rem;
+  font-weight: 600;
   line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.tapBtnPrimary:hover:not(:disabled) {
+  background: rgba(56, 189, 248, 0.22);
+}
+
+.tapBtnPrimary:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.tapBtnSecondary {
+  min-width: 34px;
+  min-height: 34px;
+  padding: 0.35rem;
+  border-radius: 0.55rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  color: #94a3b8;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.tapBtnSecondaryText {
+  min-height: 36px;
+  padding: 0.35rem 0.65rem;
+  border-radius: 0.55rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  color: #e2e8f0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.tapBtnLink {
+  min-height: 36px;
+  padding: 0.35rem 0.6rem;
+  border-radius: 0.55rem;
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  background: rgba(56, 189, 248, 0.08);
+  color: #38bdf8;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+/* Inline Weight Editor */
+.inlineWeightRow {
+  display: flex;
+  gap: 0.45rem;
+  padding-top: 0.25rem;
+}
+
+.inlineWeightInput {
+  flex: 1;
+  min-width: 0;
+  background: rgba(9, 14, 23, 0.8);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 0.55rem;
+  padding: 0.45rem 0.7rem;
+  color: #f8fafc;
+  font-size: 0.82rem;
+  outline: none;
+}
+
+.inlineWeightSaveBtn {
+  padding: 0.45rem 0.85rem;
+  border-radius: 0.55rem;
+  border: none;
+  background: #38bdf8;
+  color: #090e17;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+/* Segmented Clean / Cheat Toggle Buttons */
+.segmentToggleBtn {
+  min-height: 36px;
+  padding: 0.35rem 0.75rem;
+  border-radius: 0.55rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  color: #94a3b8;
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.segmentCleanActive {
+  background: rgba(34, 197, 94, 0.18);
+  border-color: rgba(74, 222, 128, 0.45);
+  color: #4ade80;
+}
+
+.segmentCheatActive {
+  background: rgba(244, 63, 94, 0.18);
+  border-color: rgba(251, 113, 133, 0.45);
+  color: #fb7185;
+}
+
+/* Mood Tap Buttons */
+.moodTapBtn {
+  width: 38px;
+  height: 36px;
+  border-radius: 0.55rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  font-size: 1.05rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.moodTapActive {
+  background: rgba(56, 189, 248, 0.2);
+  border-color: #38bdf8;
+  transform: scale(1.05);
+}
+
+/* Motivation */
+.motivationCard {
+  background: rgba(30, 41, 59, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 1rem;
+  padding: 1rem 1.25rem;
+}
+
+.quoteText {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: #94a3b8;
+  font-style: italic;
 }

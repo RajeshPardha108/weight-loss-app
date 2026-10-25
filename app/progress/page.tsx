@@ -8,6 +8,7 @@ import { supabase } from "../../lib/supabase";
 import { fetchUserGoals } from "../../lib/goals";
 import {
   computeFullAnalytics,
+  computeSmartAnalytics,
   getLocalDateString,
   parseLogDate,
   type DailyLog,
@@ -15,6 +16,7 @@ import {
   type AnalyticsSnapshot,
   type TrendDirection,
 } from "../../lib/analytics";
+import { Calendar, AlertTriangle, ArrowRight, CheckCircle2 } from "lucide-react";
 
 const getMoodEmoji = (mood: string): string => {
   if (mood === 'good') return '😄';
@@ -120,7 +122,7 @@ export default function Progress() {
     );
   }
 
-  const weightLogs = logs.filter(l => l.weight_kg !== null);
+  const weightLogs = logs.filter(l => l.weight_kg !== null && l.weight_kg !== undefined);
   if (weightLogs.length === 0) {
     return (
       <div className={styles.container}>
@@ -138,9 +140,9 @@ export default function Progress() {
   }
 
   // ---- Existing chart/goal calculations (preserved) ----
-  const startingWeight = weightLogs[0].weight_kg!;
-  const currentWeight = weightLogs[weightLogs.length - 1].weight_kg!;
-  const bestWeight = Math.min(...weightLogs.map(l => l.weight_kg!));
+  const startingWeight = Number(weightLogs[0].weight_kg);
+  const currentWeight = Number(weightLogs[weightLogs.length - 1].weight_kg);
+  const bestWeight = Math.min(...weightLogs.map(l => Number(l.weight_kg)));
   const weightLost = startingWeight - currentWeight;
 
   const todayDate = getLocalDateString();
@@ -156,8 +158,15 @@ export default function Progress() {
   const remainingToActive = activeGoal !== null ? (currentWeight > activeGoal ? currentWeight - activeGoal : 0) : null;
   const remainingToFinal = finalGoal !== null ? (currentWeight > finalGoal ? currentWeight - finalGoal : 0) : null;
 
-  // Use analytics for the weight insight
+  // Analytics shortcuts
   const wa = analytics?.weight;
+  const sa = analytics?.steps;
+  const wta = analytics?.water;
+  const ma = analytics?.meals;
+  const moa = analytics?.mood;
+  const ba = analytics?.bodyMeasurements;
+  const na = analytics?.nutrition;
+
   let weightInsight = { icon: '➡️', title: 'Weight holding steady', desc: 'Recent average is similar to longer-term average.' };
   if (wa && wa.trendDirection === 'losing') {
     weightInsight = { icon: '📉', title: 'Weight trending down', desc: 'Recent average is lower than your longer-term average.' };
@@ -166,6 +175,23 @@ export default function Progress() {
   }
 
   // Chart Logic (preserved)
+  const recent7Logs = weightLogs.slice(-7);
+  const fallbackAvg7 = recent7Logs.length > 0 ? (recent7Logs.reduce((acc, c) => acc + Number(c.weight_kg), 0) / recent7Logs.length) : null;
+  const recent30Logs = weightLogs.slice(-30);
+  const fallbackAvg30 = recent30Logs.length > 0 ? (recent30Logs.reduce((acc, c) => acc + Number(c.weight_kg), 0) / recent30Logs.length) : null;
+  const displayAvg7 = wa?.average7d ?? fallbackAvg7;
+  const displayAvg30 = wa?.average30d ?? fallbackAvg30;
+
+  const stepLogs = logs.filter(l => l.steps !== null && l.steps !== undefined);
+  const recentSteps = stepLogs.slice(-7);
+  const fallbackStepsAvg7 = recentSteps.length > 0 ? Math.round(recentSteps.reduce((acc, c) => acc + Number(c.steps), 0) / recentSteps.length) : null;
+  const displayStepsAvg7 = sa?.average7d ?? fallbackStepsAvg7;
+
+  const waterLogs = logs.filter(l => l.water_glasses !== null && l.water_glasses !== undefined);
+  const recentWater = waterLogs.slice(-7);
+  const fallbackWaterAvg7 = recentWater.length > 0 ? +(recentWater.reduce((acc, c) => acc + Number(c.water_glasses), 0) / recentWater.length).toFixed(1) : null;
+  const displayWaterAvg7 = wta?.average7d ?? fallbackWaterAvg7;
+
   let chartLogs = weightLogs;
   if (chartRange !== "all" && weightLogs.length > 0) {
     const rangeDays = parseInt(chartRange, 10);
@@ -174,12 +200,12 @@ export default function Progress() {
     chartLogs = weightLogs.filter(log => parseLogDate(log.log_date).getTime() >= startDateMs);
   }
 
-  const minHistoricalWeight = chartLogs.length > 0 ? Math.min(...chartLogs.map(l => l.weight_kg!)) : currentWeight;
-  const maxHistoricalWeight = chartLogs.length > 0 ? Math.max(...chartLogs.map(l => l.weight_kg!)) : currentWeight;
+  const minHistoricalWeight = chartLogs.length > 0 ? Math.min(...chartLogs.map(l => Number(l.weight_kg))) : currentWeight;
+  const maxHistoricalWeight = chartLogs.length > 0 ? Math.max(...chartLogs.map(l => Number(l.weight_kg))) : currentWeight;
   
   const chartMinWeight = activeGoal !== null ? Math.floor(Math.min(minHistoricalWeight, activeGoal)) - 2 : minHistoricalWeight - 2;
   const chartMaxWeight = activeGoal !== null ? Math.ceil(Math.max(maxHistoricalWeight, activeGoal)) + 2 : maxHistoricalWeight + 2;
-  const range = chartMaxWeight - chartMinWeight;
+  const range = Math.max(1, chartMaxWeight - chartMinWeight);
   const getY = (val: number) => 100 - (((val - chartMinWeight) / range) * 100);
 
   const pointData = chartLogs.map((log, i) => {
@@ -188,8 +214,8 @@ export default function Progress() {
     return {
       index: i,
       x: xPct,
-      y: getY(log.weight_kg!),
-      weight: log.weight_kg!,
+      y: getY(Number(log.weight_kg)),
+      weight: Number(log.weight_kg),
       shortDateStr: parsedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
       fullDateStr: parsedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
     };
@@ -209,13 +235,8 @@ export default function Progress() {
     setActivePointIndex(closestIdx);
   };
 
-  // Analytics shortcuts
-  const sa = analytics?.steps;
-  const wta = analytics?.water;
-  const ma = analytics?.meals;
-  const moa = analytics?.mood;
-  const ba = analytics?.bodyMeasurements;
-  const na = analytics?.nutrition;
+  const smartReport = computeSmartAnalytics(logs, activeGoal, finalGoal);
+  const { activeGoalForecast, finalGoalForecast, plateau, weeklyCheckIn } = smartReport;
 
   return (
     <div className={styles.container}>
@@ -224,11 +245,16 @@ export default function Progress() {
         {/* HEADER */}
         <div className={styles.header}>
           <h1 className={styles.title}>Progress</h1>
+          {smartReport.weeklyRateKg !== null && (
+            <div className={styles.paceBadgeHeader}>
+              Pace: {smartReport.weeklyRateKg > 0 ? `+${smartReport.weeklyRateKg.toFixed(2)}` : smartReport.weeklyRateKg.toFixed(2)} kg/wk
+            </div>
+          )}
         </div>
 
         <div className={styles.gridDesktop}>
           
-          {/* LEFT COLUMN: Main Chart & Goals */}
+          {/* LEFT COLUMN: Main Chart, Goal Forecasts & Weekly Check-In */}
           <div className={styles.colLeft}>
             
             {/* HERO CHART CARD */}
@@ -304,8 +330,8 @@ export default function Progress() {
               </div>
             </div>
 
-            {/* YOUR GOALS CARDS */}
-            <div className={styles.sectionHeader}>Your Goals</div>
+            {/* YOUR GOALS & FORECAST CARDS */}
+            <div className={styles.sectionHeader}>Goal Forecast</div>
             <div className={styles.goalsGrid}>
               <div className={styles.goalCard}>
                 <div className={styles.goalLabel}>Active Goal</div>
@@ -314,6 +340,16 @@ export default function Progress() {
                   {activeGoal && currentWeight <= activeGoal 
                     ? <span className={styles.achievedText}>Goal achieved! 🎯</span> 
                     : `${remainingToActive ? remainingToActive.toFixed(1) : '--'} kg to go`}
+                </div>
+                <div className={styles.goalForecastLine}>
+                  <Calendar size={12} />
+                  {activeGoalForecast.status === 'on_track' || activeGoalForecast.status === 'slow_pace' ? (
+                    <span>Est. <strong>{activeGoalForecast.estimatedDateFormatted}</strong> (~{activeGoalForecast.estimatedDays}d)</span>
+                  ) : activeGoalForecast.isAchieved ? (
+                    <span>Completed</span>
+                  ) : (
+                    <span>{activeGoalForecast.estimatedDateFormatted || 'Needs 7d trend'}</span>
+                  )}
                 </div>
               </div>
               <div className={styles.goalCard}>
@@ -324,24 +360,119 @@ export default function Progress() {
                     ? <span className={styles.achievedText}>Goal achieved! 🏆</span> 
                     : `${remainingToFinal ? remainingToFinal.toFixed(1) : '--'} kg to go`}
                 </div>
+                <div className={styles.goalForecastLine}>
+                  <Calendar size={12} />
+                  {finalGoalForecast.status === 'on_track' || finalGoalForecast.status === 'slow_pace' ? (
+                    <span>Est. <strong>{finalGoalForecast.estimatedDateFormatted}</strong> (~{Math.ceil((finalGoalForecast.estimatedDays || 7) / 7)}w)</span>
+                  ) : finalGoalForecast.isAchieved ? (
+                    <span>Completed</span>
+                  ) : (
+                    <span>{finalGoalForecast.estimatedDateFormatted || 'Needs 7d trend'}</span>
+                  )}
+                </div>
               </div>
             </div>
+
+            {/* PLATEAU DETECTOR STATUS CARD */}
+            <div className={plateau.isPlateau ? styles.plateauAlertBox : styles.plateauNormalBox}>
+              <div className={styles.plateauBoxTop}>
+                <div className={styles.plateauBoxTitleRow}>
+                  {plateau.isPlateau ? (
+                    <AlertTriangle size={16} style={{ color: '#fbbf24', flexShrink: 0 }} />
+                  ) : (
+                    <CheckCircle2 size={16} style={{ color: '#4ade80', flexShrink: 0 }} />
+                  )}
+                  <span className={styles.plateauBoxTitle}>
+                    {plateau.isPlateau ? 'Plateau Detected' : 'Plateau Monitor: Clear'}
+                  </span>
+                </div>
+                {plateau.isPlateau && (
+                  <Link
+                    href={`/coach?role=strategist&q=${encodeURIComponent(plateau.coachPrompt)}`}
+                    className={styles.plateauBoxAction}
+                  >
+                    <span>Get Plan</span>
+                    <ArrowRight size={13} />
+                  </Link>
+                )}
+              </div>
+              <p className={styles.plateauBoxDesc}>{plateau.message}</p>
+            </div>
+
+            {/* WEEKLY CHECK-IN COMPARISON CARD */}
+            {weeklyCheckIn.hasEnoughData && (
+              <div className={styles.weeklySummaryCard}>
+                <div className={styles.weeklySummaryHeader}>
+                  <div>
+                    <div className={styles.weeklySummaryTitle}>Weekly Check-In Comparison</div>
+                    <div className={styles.weeklySummarySub}>Last 7 days ({weeklyCheckIn.thisWeekRangeLabel}) vs. previous 7 days</div>
+                  </div>
+                  <span className={styles.weeklySummaryCount}>{weeklyCheckIn.daysLoggedThisWeek}/7 days</span>
+                </div>
+                <div className={styles.weeklySummaryGrid}>
+                  <div className={styles.weeklySummaryCell}>
+                    <span className={styles.weeklyCellLabel}>Weight Avg</span>
+                    <span className={styles.weeklyCellValue}>
+                      {weeklyCheckIn.weight.thisWeekAvg !== null ? `${weeklyCheckIn.weight.thisWeekAvg} kg` : '--'}
+                    </span>
+                    <span className={styles.weeklyCellDelta}>
+                      {weeklyCheckIn.weight.delta !== null
+                        ? `${weeklyCheckIn.weight.delta > 0 ? '+' : ''}${weeklyCheckIn.weight.delta} kg vs last wk`
+                        : 'No prior week'}
+                    </span>
+                  </div>
+                  <div className={styles.weeklySummaryCell}>
+                    <span className={styles.weeklyCellLabel}>Daily Steps</span>
+                    <span className={styles.weeklyCellValue}>
+                      {weeklyCheckIn.steps.thisWeekAvg !== null ? weeklyCheckIn.steps.thisWeekAvg.toLocaleString() : '--'}
+                    </span>
+                    <span className={styles.weeklyCellDelta}>
+                      {weeklyCheckIn.steps.delta !== null
+                        ? `${weeklyCheckIn.steps.delta > 0 ? '+' : ''}${weeklyCheckIn.steps.delta.toLocaleString()} vs last wk`
+                        : 'No prior week'}
+                    </span>
+                  </div>
+                  <div className={styles.weeklySummaryCell}>
+                    <span className={styles.weeklyCellLabel}>Hydration</span>
+                    <span className={styles.weeklyCellValue}>
+                      {weeklyCheckIn.water.thisWeekAvg !== null ? `${weeklyCheckIn.water.thisWeekAvg}` : '--'}
+                    </span>
+                    <span className={styles.weeklyCellDelta}>
+                      {weeklyCheckIn.water.delta !== null
+                        ? `${weeklyCheckIn.water.delta > 0 ? '+' : ''}${weeklyCheckIn.water.delta} vs last wk`
+                        : 'No prior week'}
+                    </span>
+                  </div>
+                  <div className={styles.weeklySummaryCell}>
+                    <span className={styles.weeklyCellLabel}>Clean Meals</span>
+                    <span className={styles.weeklyCellValue}>
+                      {weeklyCheckIn.cleanMeals.thisWeekPct !== null ? `${weeklyCheckIn.cleanMeals.thisWeekPct}%` : '--'}
+                    </span>
+                    <span className={styles.weeklyCellDelta}>
+                      {weeklyCheckIn.cleanMeals.deltaPct !== null
+                        ? `${weeklyCheckIn.cleanMeals.deltaPct > 0 ? '+' : ''}${weeklyCheckIn.cleanMeals.deltaPct}% vs last wk`
+                        : 'No prior week'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
 
           </div>
           
           {/* RIGHT COLUMN: Stats, Insights & Analytics */}
           <div className={styles.colRight}>
             
-            {/* STATS STRIP — uses analytics */}
+            {/* STATS STRIP — uses analytics with robust fallback */}
             <div className={styles.statsStrip}>
               <div className={styles.statBox}>
-                <div className={styles.statBoxLabel}>7-Day Avg</div>
-                <div className={styles.statBoxVal}>{wa?.average7d !== null && wa?.average7d !== undefined ? wa.average7d.toFixed(1) : '--'}</div>
+                <div className={styles.statBoxLabel}>Recent 7D Avg</div>
+                <div className={styles.statBoxVal}>{displayAvg7 !== null && displayAvg7 !== undefined ? displayAvg7.toFixed(1) : '--'}</div>
               </div>
               <div className={styles.statDivider}></div>
               <div className={styles.statBox}>
-                <div className={styles.statBoxLabel}>30-Day Avg</div>
-                <div className={styles.statBoxVal}>{wa?.average30d !== null && wa?.average30d !== undefined ? wa.average30d.toFixed(1) : '--'}</div>
+                <div className={styles.statBoxLabel}>Recent 30D Avg</div>
+                <div className={styles.statBoxVal}>{displayAvg30 !== null && displayAvg30 !== undefined ? displayAvg30.toFixed(1) : '--'}</div>
               </div>
               <div className={styles.statDivider}></div>
               <div className={styles.statBox}>
@@ -361,22 +492,22 @@ export default function Progress() {
                 </div>
               </div>
               
-              {sa && sa.average7d !== null && (
+              {displayStepsAvg7 !== null && (
                 <div className={styles.insightItem}>
                   <div className={styles.insightIcon}>🚶</div>
                   <div>
                     <div className={styles.insightTitle}>Activity</div>
-                    <div className={styles.insightDesc}>Averaging {sa.average7d.toLocaleString()} steps/day (7d).</div>
+                    <div className={styles.insightDesc}>Averaging {displayStepsAvg7.toLocaleString()} steps/day.</div>
                   </div>
                 </div>
               )}
 
-              {wta && wta.average7d !== null && (
+              {displayWaterAvg7 !== null && (
                 <div className={styles.insightItem}>
                   <div className={styles.insightIcon}>💧</div>
                   <div>
                     <div className={styles.insightTitle}>Hydration</div>
-                    <div className={styles.insightDesc}>Averaging {wta.average7d} glasses/day (7d).</div>
+                    <div className={styles.insightDesc}>Averaging {displayWaterAvg7} glasses/day.</div>
                   </div>
                 </div>
               )}

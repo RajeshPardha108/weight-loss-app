@@ -30,6 +30,14 @@ export default function BottomNav() {
             Journal
           </Link>
 
+          <Link href="/coach" className={`${styles.navItem} ${pathname?.startsWith('/coach') ? styles.active : ''}`}>
+            <svg className={styles.navIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2a8 8 0 0 0-8 8c0 3.3 2 6.2 5 7.4V20a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v-2.6c3-1.2 5-4.1 5-7.4a8 8 0 0 0-8-8z"></path>
+              <path d="M9.5 10h.01M14.5 10h.01M9.5 14a3.5 3.5 0 0 0 5 0"></path>
+            </svg>
+            Coach
+          </Link>
+
           <Link href="/progress" className={`${styles.navItem} ${pathname?.startsWith('/progress') ? styles.active : ''}`}>
             <svg className={styles.navIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>

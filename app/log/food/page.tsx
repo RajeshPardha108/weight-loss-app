@@ -3,6 +3,8 @@
 import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import Markdown from "react-markdown";
+import { Globe, ExternalLink, Sparkles } from "lucide-react";
 import styles from "../log-form.module.css";
 import { supabase } from "../../../lib/supabase";
 import { NutritionCalculator } from "../../../lib/nutrition/nutritionCalculator";
@@ -44,6 +46,41 @@ function FoodLogContent() {
   const [selectedCandidates, setSelectedCandidates] = useState<Record<number, NutritionCandidate | null>>({});
   const [calculatedResults, setCalculatedResults] = useState<Record<number, CalculatedNutritionResult | null>>({});
 
+  // Google Search Grounding state (gemini-3.8-flash)
+  const [searchGroundingQuery, setSearchGroundingQuery] = useState("");
+  const [isSearchingGrounding, setIsSearchingGrounding] = useState(false);
+  const [groundingResult, setGroundingResult] = useState<{
+    content: string;
+    sources: Array<{ title: string; url: string }>;
+  } | null>(null);
+  const [showSearchGroundingPanel, setShowSearchGroundingPanel] = useState(false);
+
+  const handleSearchNutritionGrounding = async () => {
+    if (!searchGroundingQuery.trim()) return;
+    setIsSearchingGrounding(true);
+    setGroundingResult(null);
+    try {
+      const res = await fetch('/api/search-nutrition', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: searchGroundingQuery }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setGroundingResult({
+          content: data.content,
+          sources: data.sources || [],
+        });
+      } else {
+        throw new Error(data.error || 'Failed to search nutrition data.');
+      }
+    } catch (err: any) {
+      console.error('Google search error:', err);
+    } finally {
+      setIsSearchingGrounding(false);
+    }
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -77,14 +114,13 @@ function FoodLogContent() {
         meal_status: meal || null,
       };
 
-      if (logId) {
-        const { error } = await supabase.from('daily_logs').update(payload).eq('id', logId);
-        if (error) throw error;
-      } else {
-        const { data, error } = await supabase.from('daily_logs').insert([payload]).select().single();
-        if (error) throw error;
-        if (data) setLogId(data.id);
-      }
+      const { data, error } = await supabase
+        .from('daily_logs')
+        .upsert(payload, { onConflict: 'log_date' })
+        .select()
+        .single();
+      if (error) throw error;
+      if (data) setLogId(data.id);
 
       setStatusMsg({ type: "success", text: "Saved!" });
     } catch (err: any) {
@@ -262,6 +298,176 @@ function FoodLogContent() {
               >
                 {isAnalyzing ? "Analyzing food input..." : "Analyze Food"}
               </button>
+
+              {/* Google Search Grounding Nutrition Verification */}
+              <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem" }}>
+                <button
+                  type="button"
+                  onClick={() => setShowSearchGroundingPanel(!showSearchGroundingPanel)}
+                  style={{
+                    flex: 1,
+                    background: showSearchGroundingPanel ? "rgba(56, 189, 248, 0.2)" : "rgba(30, 41, 59, 0.7)",
+                    border: "1px solid rgba(56, 189, 248, 0.3)",
+                    color: "#38bdf8",
+                    padding: "0.55rem 0.75rem",
+                    borderRadius: "0.75rem",
+                    fontSize: "0.8rem",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "0.4rem",
+                  }}
+                >
+                  <Globe style={{ width: "14px", height: "14px" }} />
+                  <span>Google Search Nutrition Lookup</span>
+                </button>
+
+                <Link
+                  href="/coach"
+                  style={{
+                    background: "rgba(99, 102, 241, 0.15)",
+                    border: "1px solid rgba(99, 102, 241, 0.3)",
+                    color: "#a5b4fc",
+                    padding: "0.55rem 0.75rem",
+                    borderRadius: "0.75rem",
+                    fontSize: "0.8rem",
+                    fontWeight: 600,
+                    textDecoration: "none",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.35rem",
+                  }}
+                >
+                  <Sparkles style={{ width: "14px", height: "14px" }} />
+                  <span>Ask Coach &rarr;</span>
+                </Link>
+              </div>
+
+              {/* Collapsible Search Grounding Panel */}
+              {showSearchGroundingPanel && (
+                <div
+                  style={{
+                    background: "rgba(15, 23, 42, 0.9)",
+                    border: "1px solid rgba(56, 189, 248, 0.25)",
+                    borderRadius: "0.85rem",
+                    padding: "0.85rem",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "0.6rem",
+                  }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "#38bdf8", display: "flex", alignItems: "center", gap: "0.35rem" }}>
+                      <Globe style={{ width: "13px", height: "13px" }} />
+                      <span>Google Search Grounded Nutrition (gemini-3.8-flash)</span>
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", gap: "0.4rem" }}>
+                    <input
+                      type="text"
+                      className={styles.input}
+                      style={{ fontSize: "0.8rem", padding: "0.5rem 0.75rem" }}
+                      placeholder="e.g. Starbucks egg bites calories, Chipotle bowl macros..."
+                      value={searchGroundingQuery}
+                      onChange={(e) => setSearchGroundingQuery(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleSearchNutritionGrounding();
+                        }
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleSearchNutritionGrounding}
+                      disabled={isSearchingGrounding || !searchGroundingQuery.trim()}
+                      style={{
+                        background: "linear-gradient(135deg, #0284c7 0%, #06b6d4 100%)",
+                        color: "#fff",
+                        border: "none",
+                        borderRadius: "0.5rem",
+                        padding: "0 0.85rem",
+                        fontSize: "0.75rem",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {isSearchingGrounding ? "Searching..." : "Search"}
+                    </button>
+                  </div>
+
+                  {groundingResult && (
+                    <div
+                      style={{
+                        background: "rgba(30, 41, 59, 0.8)",
+                        borderRadius: "0.5rem",
+                        padding: "0.75rem",
+                        border: "1px solid rgba(255, 255, 255, 0.08)",
+                        fontSize: "0.8rem",
+                        lineHeight: "1.5",
+                      }}
+                    >
+                      <div className="markdown-body">
+                        <Markdown>{groundingResult.content}</Markdown>
+                      </div>
+
+                      {groundingResult.sources.length > 0 && (
+                        <div style={{ marginTop: "0.6rem", paddingTop: "0.5rem", borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+                          <div style={{ fontSize: "0.7rem", color: "#94a3b8", fontWeight: 600, marginBottom: "0.3rem" }}>
+                            Verified Web Sources:
+                          </div>
+                          <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+                            {groundingResult.sources.map((s, idx) => (
+                              <a
+                                key={idx}
+                                href={s.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{
+                                  fontSize: "0.72rem",
+                                  color: "#38bdf8",
+                                  textDecoration: "none",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: "0.3rem",
+                                }}
+                              >
+                                <span>• {s.title}</span>
+                                <ExternalLink style={{ width: "11px", height: "11px" }} />
+                              </a>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFoodInputText((prev) => (prev ? `${prev}, ${searchGroundingQuery}` : searchGroundingQuery));
+                          setShowSearchGroundingPanel(false);
+                        }}
+                        style={{
+                          marginTop: "0.6rem",
+                          background: "rgba(56, 189, 248, 0.15)",
+                          border: "1px solid rgba(56, 189, 248, 0.3)",
+                          color: "#38bdf8",
+                          padding: "0.35rem 0.65rem",
+                          borderRadius: "0.4rem",
+                          fontSize: "0.75rem",
+                          cursor: "pointer",
+                          fontWeight: 600,
+                          width: "100%",
+                        }}
+                      >
+                        + Add &quot;{searchGroundingQuery}&quot; to Input
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Error / AI-Unavailable Banner */}
@@ -361,7 +567,7 @@ function FoodLogContent() {
                       {/* Case A: no_match state */}
                       {match && match.matchStatus === 'no_match' && (
                         <div style={{ fontSize: "0.85rem", color: "#f87171", background: "rgba(248,113,113,0.08)", padding: "0.75rem", borderRadius: "0.75rem", border: "1px solid rgba(248,113,113,0.15)" }}>
-                          No matching food found in USDA FoodData Central or Open Food Facts for "{item.food}".
+                          No matching food found in USDA FoodData Central or Open Food Facts for &quot;{item.food}&quot;.
                         </div>
                       )}
 

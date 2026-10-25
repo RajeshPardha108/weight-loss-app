@@ -1,0 +1,6 @@
+{
+  "name": "Weight Loss & Health Tracker",
+  "description": "Daily weight, nutrition, water, steps, mood, and body measurement tracking with Gemini AI coaching, Search Grounding, and analytics.",
+  "capabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

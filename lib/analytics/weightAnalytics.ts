@@ -55,12 +55,14 @@ export function computeWeightAnalytics(logs: DailyLog[]): WeightAnalytics {
   const average7d = average(last7.map(l => l.weight_kg!));
   const average30d = average(last30.map(l => l.weight_kg!));
 
-  // Previous 7-day average (days 8-14 ago)
+  // Previous 7-day average (days 8-14 ago relative to anchor)
   const today = getLocalDateString();
   const todayMs = parseLogDate(today).getTime();
+  const latestMs = parseLogDate(latest.log_date).getTime();
   const msInDay = 24 * 60 * 60 * 1000;
-  const prev7Start = todayMs - (13 * msInDay);
-  const prev7End = todayMs - (7 * msInDay);
+  const anchorMs = (todayMs - latestMs <= 30 * msInDay && todayMs >= latestMs) ? todayMs : latestMs;
+  const prev7Start = anchorMs - (13 * msInDay);
+  const prev7End = anchorMs - (7 * msInDay);
   const prev7Logs = sorted.filter(l => {
     const ms = parseLogDate(l.log_date).getTime();
     return ms >= prev7Start && ms <= prev7End;

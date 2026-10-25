@@ -379,7 +379,7 @@ const testCases: TestCase[] = [
 async function runStressTest() {
   const parser = new FoodParser();
 
-  let totalTests = testCases.length;
+  const totalTests = testCases.length;
   let passedCount = 0;
   let failedCount = 0;
 

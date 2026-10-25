@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import styles from "../page.module.css";
+import styles from "./page.module.css";
 import { supabase } from "../../lib/supabase";
 
 const getLocalDateString = (d: Date = new Date()) => {
@@ -10,32 +10,82 @@ const getLocalDateString = (d: Date = new Date()) => {
     timeZone: "Asia/Kolkata",
     year: "numeric",
     month: "2-digit",
-    day: "2-digit"
+    day: "2-digit",
   });
   const parts = formatter.formatToParts(d);
-  const y = parts.find(p => p.type === 'year')?.value;
-  const m = parts.find(p => p.type === 'month')?.value;
-  const dNum = parts.find(p => p.type === 'day')?.value;
+  const y = parts.find((p) => p.type === "year")?.value;
+  const m = parts.find((p) => p.type === "month")?.value;
+  const dNum = parts.find((p) => p.type === "day")?.value;
   return `${y}-${m}-${dNum}`;
+};
+
+const parseLogDate = (dateStr: string) => {
+  const [y, m, d] = dateStr.split("-");
+  return new Date(parseInt(y, 10), parseInt(m, 10) - 1, parseInt(d, 10));
 };
 
 export default function Journal() {
   const [selectedDateStr, setSelectedDateStr] = useState(getLocalDateString());
   const [log, setLog] = useState<any>(null);
+  const [recentLogs, setRecentLogs] = useState<any[]>([]);
+  const [latestLoggedDate, setLatestLoggedDate] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Fetch recent history and latest entry date across the database on mount
   useEffect(() => {
+    const fetchHistory = async () => {
+      try {
+        const { data, error: histErr } = await supabase
+          .from("daily_logs")
+          .select("*")
+          .order("log_date", { ascending: false })
+          .limit(30);
+
+        if (histErr) throw histErr;
+
+        if (data && data.length > 0) {
+          setRecentLogs(data);
+          setLatestLoggedDate(data[0].log_date);
+
+          const todayStr = getLocalDateString();
+          const todayEntry = data.find((r: any) => r.log_date === todayStr);
+          if (todayEntry) {
+            setLog(todayEntry);
+          } else {
+            // Show the most recent logged date by default so the journal is populated on open
+            setSelectedDateStr(data[0].log_date);
+            setLog(data[0]);
+          }
+        }
+      } catch (err: any) {
+        console.error("Failed to load journal history:", err);
+        setError(err.message || "Failed to load journal records");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchHistory();
+  }, []);
+
+  // Fetch record when user changes the selected date
+  useEffect(() => {
+    const cached = recentLogs.find((r) => r.log_date === selectedDateStr);
+    if (cached) {
+      setLog(cached);
+      return;
+    }
+
     const fetchData = async () => {
       setLoading(true);
       setError(null);
       try {
         const { data, error: fetchErr } = await supabase
-          .from('daily_logs')
-          .select('*')
-          .eq('log_date', selectedDateStr)
+          .from("daily_logs")
+          .select("*")
+          .eq("log_date", selectedDateStr)
           .maybeSingle();
-        
+
         if (fetchErr) throw fetchErr;
         setLog(data || null);
       } catch (err: any) {
@@ -46,109 +96,261 @@ export default function Journal() {
       }
     };
     fetchData();
-  }, [selectedDateStr]);
+  }, [selectedDateStr, recentLogs]);
 
   const changeDate = (days: number) => {
-    const current = new Date(selectedDateStr);
+    const current = parseLogDate(selectedDateStr);
     current.setDate(current.getDate() + days);
-    
-    // Format safely to YYYY-MM-DD
+
     const y = current.getFullYear();
-    const m = String(current.getMonth() + 1).padStart(2, '0');
-    const d = String(current.getDate()).padStart(2, '0');
+    const m = String(current.getMonth() + 1).padStart(2, "0");
+    const d = String(current.getDate()).padStart(2, "0");
     setSelectedDateStr(`${y}-${m}-${d}`);
   };
 
   const getMoodEmoji = (m: string) => {
-    if (m === 'good') return '😄';
-    if (m === 'neutral') return '😐';
-    if (m === 'bad') return '😞';
-    return '';
+    if (m === "good") return "😄 Great";
+    if (m === "neutral") return "😐 Okay";
+    if (m === "bad") return "😞 Challenging";
+    return "—";
   };
 
-  const displayDate = new Date(selectedDateStr).toLocaleDateString('en-US', {
-    weekday: 'long',
-    month: 'long',
-    day: 'numeric'
+  const displayDate = parseLogDate(selectedDateStr).toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
   });
 
   const isToday = selectedDateStr === getLocalDateString();
+  const hasData =
+    log &&
+    (log.weight_kg !== null ||
+      log.steps !== null ||
+      log.water_glasses !== null ||
+      log.meal_status !== null ||
+      log.mood !== null);
 
   return (
     <div className={styles.container}>
       <div className={styles.mobileView}>
+        {/* HEADER & DATE SWITCHER */}
         <div className={styles.header}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <button onClick={() => changeDate(-1)} style={{ background: 'none', border: 'none', color: '#38bdf8', fontSize: '1.5rem', cursor: 'pointer', padding: '0.5rem' }}>‹</button>
-            <div style={{ textAlign: 'center' }}>
-              <h1 className={styles.title} style={{ fontSize: '1.25rem' }}>{displayDate}</h1>
-              {!isToday && (
-                <button onClick={() => setSelectedDateStr(getLocalDateString())} style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '0.75rem', marginTop: '0.25rem', cursor: 'pointer', textDecoration: 'underline' }}>
-                  Return to Today
-                </button>
-              )}
+          <div className={styles.dateNav}>
+            <button
+              onClick={() => changeDate(-1)}
+              className={styles.arrowBtn}
+              title="Previous Day"
+              aria-label="Previous Day"
+            >
+              ‹
+            </button>
+
+            <div className={styles.dateCenter}>
+              <h1 className={styles.dateTitle}>{displayDate}</h1>
+              <div className={styles.dateSub}>
+                {!isToday ? (
+                  <button
+                    onClick={() => setSelectedDateStr(getLocalDateString())}
+                    className={styles.returnTodayBtn}
+                  >
+                    Return to Today
+                  </button>
+                ) : (
+                  <span style={{ fontSize: "0.72rem", color: "#4ade80" }}>Today</span>
+                )}
+                <span style={{ color: "#64748b" }}>·</span>
+                <input
+                  type="date"
+                  value={selectedDateStr}
+                  onChange={(e) => e.target.value && setSelectedDateStr(e.target.value)}
+                  className={styles.datePickerInput}
+                  title="Choose date"
+                />
+              </div>
             </div>
-            <button onClick={() => changeDate(1)} style={{ background: 'none', border: 'none', color: '#38bdf8', fontSize: '1.5rem', cursor: 'pointer', padding: '0.5rem' }}>›</button>
+
+            <button
+              onClick={() => changeDate(1)}
+              className={styles.arrowBtn}
+              title="Next Day"
+              aria-label="Next Day"
+            >
+              ›
+            </button>
           </div>
         </div>
 
-        {error ? (
-          <div style={{ padding: '2rem', textAlign: 'center' }}>
-            <p style={{ color: '#f87171' }}>Error: {error}</p>
-            <button onClick={() => window.location.reload()} className={styles.primaryActionBtn} style={{ marginTop: '1rem', padding: '0.5rem 1rem' }}>Retry</button>
-          </div>
-        ) : loading ? (
-          <div style={{ padding: '2rem', textAlign: 'center', color: '#94a3b8' }}>Loading...</div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginTop: '1rem' }}>
-            
-            <div style={{ display: 'flex', gap: '1rem' }}>
-              <div className={styles.card} style={{ margin: 0, flex: 1 }}>
-                <div className={styles.cardLabel}>Weight</div>
-                <div>
-                  <span className={styles.cardValue}>{log?.weight_kg || "--"}</span>
-                  <span className={styles.cardUnit}>kg</span>
+        {/* BODY */}
+        <div className={styles.contentBody}>
+          {/* Quick jump to latest recorded date if current day is empty */}
+          {!hasData && latestLoggedDate && latestLoggedDate !== selectedDateStr && (
+            <div className={styles.jumpBanner}>
+              <span className={styles.jumpText}>
+                💡 Latest recorded entry was on <strong>{latestLoggedDate}</strong>
+              </span>
+              <button
+                onClick={() => setSelectedDateStr(latestLoggedDate)}
+                className={styles.jumpBtn}
+              >
+                View {latestLoggedDate}
+              </button>
+            </div>
+          )}
+
+          {error ? (
+            <div style={{ padding: "2rem", textAlign: "center" }}>
+              <p style={{ color: "#f87171" }}>Error: {error}</p>
+              <button
+                onClick={() => window.location.reload()}
+                className={styles.primaryActionBtn}
+                style={{ marginTop: "1rem" }}
+              >
+                Retry
+              </button>
+            </div>
+          ) : loading && !log && recentLogs.length === 0 ? (
+            <div style={{ padding: "3rem", textAlign: "center", color: "#94a3b8" }}>
+              Loading journal records...
+            </div>
+          ) : (
+            <>
+              {/* Top Weight & Steps Metric Cards */}
+              <div className={styles.metricsRow}>
+                <div className={styles.metricCard}>
+                  <div className={styles.cardLabel}>Weight</div>
+                  <div className={styles.cardValueRow}>
+                    <span className={styles.cardValue}>
+                      {log?.weight_kg !== null && log?.weight_kg !== undefined
+                        ? Number(log.weight_kg).toFixed(1)
+                        : "--"}
+                    </span>
+                    <span className={styles.cardUnit}>kg</span>
+                  </div>
+                  {log?.weight_before_toilet && (
+                    <div className={styles.cardSub}>
+                      Pre-toilet: {log.weight_before_toilet} kg
+                    </div>
+                  )}
+                </div>
+
+                <div className={styles.metricCard}>
+                  <div className={styles.cardLabel}>Daily Steps</div>
+                  <div className={styles.cardValueRow}>
+                    <span className={styles.cardValue}>
+                      {log?.steps !== null && log?.steps !== undefined
+                        ? Number(log.steps).toLocaleString()
+                        : "--"}
+                    </span>
+                  </div>
+                  <div className={styles.cardSub}>
+                    {log?.steps
+                      ? `${Math.round((Number(log.steps) / 10000) * 100)}% of 10k goal`
+                      : "Target: 10,000"}
+                  </div>
                 </div>
               </div>
-              <div className={styles.card} style={{ margin: 0, flex: 1 }}>
-                <div className={styles.cardLabel}>Steps</div>
-                <div>
-                  <span className={styles.cardValue}>{log?.steps || "--"}</span>
+
+              {/* Trackers Section */}
+              <div className={styles.trackersCard}>
+                <h3 className={styles.trackersTitle}>Daily Habit Trackers</h3>
+
+                <div className={styles.trackerRow}>
+                  <span className={styles.trackerLabel}>💧 Water Intake</span>
+                  <span
+                    className={styles.trackerVal}
+                    style={{ color: log?.water_glasses ? "#4ade80" : "#64748b" }}
+                  >
+                    {log?.water_glasses
+                      ? `${log.water_glasses} ${Number(log.water_glasses) > 6 ? "Glasses" : "L / Glasses"}`
+                      : "Not logged"}
+                  </span>
+                </div>
+
+                <div className={styles.trackerRow}>
+                  <span className={styles.trackerLabel}>🍽 Meals & Nutrition</span>
+                  <span
+                    className={styles.trackerVal}
+                    style={{
+                      color:
+                        log?.meal_status === "clean"
+                          ? "#4ade80"
+                          : log?.meal_status === "cheat"
+                          ? "#fbbf24"
+                          : "#64748b",
+                      textTransform: "capitalize",
+                    }}
+                  >
+                    {log?.meal_status ? `${log.meal_status} diet` : "Not logged"}
+                  </span>
+                </div>
+
+                <div className={styles.trackerRow}>
+                  <span className={styles.trackerLabel}>🙂 Mood & Energy</span>
+                  <span
+                    className={styles.trackerVal}
+                    style={{ color: log?.mood ? "#4ade80" : "#64748b" }}
+                  >
+                    {log?.mood ? getMoodEmoji(log.mood) : "Not logged"}
+                  </span>
                 </div>
               </div>
-            </div>
 
-            <div style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.05)', borderRadius: '1.25rem', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <h3 style={{ margin: '0 0 0.25rem 0', fontSize: '0.875rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Daily Trackers</h3>
-              
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: '#f8fafc', fontWeight: 500 }}>💧 Water</span>
-                <span style={{ color: log?.water_glasses ? '#4ade80' : '#64748b' }}>
-                  {log?.water_glasses ? `${log.water_glasses} L` : '—'}
-                </span>
-              </div>
-              
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: '#f8fafc', fontWeight: 500 }}>🍽 Food</span>
-                <span style={{ color: log?.meal_status ? '#4ade80' : '#64748b', textTransform: 'capitalize' }}>
-                  {log?.meal_status || '—'}
-                </span>
-              </div>
-              
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: '#f8fafc', fontWeight: 500 }}>🙂 Mood</span>
-                <span style={{ color: log?.mood ? '#4ade80' : '#64748b' }}>
-                  {log?.mood ? getMoodEmoji(log.mood) : '—'}
-                </span>
-              </div>
-            </div>
+              {/* Action Button */}
+              <Link
+                href={`/log?date=${selectedDateStr}`}
+                className={styles.primaryActionBtn}
+              >
+                <span>{hasData ? "✏️ Edit This Day's Log" : "+ Add Log for This Day"}</span>
+              </Link>
 
-            <Link href={`/log?date=${selectedDateStr}`} className={styles.primaryActionBtn} style={{ marginTop: '0.5rem' }}>
-              + Add / Edit Data
-            </Link>
+              {/* Recent Journal Entries History */}
+              {recentLogs.length > 0 && (
+                <div className={styles.historyCard}>
+                  <h3 className={styles.trackersTitle}>
+                    Recent Logged Days ({recentLogs.length})
+                  </h3>
+                  <div className={styles.historyList}>
+                    {recentLogs.slice(0, 12).map((entry) => {
+                      const isSelected = entry.log_date === selectedDateStr;
+                      const formatted = parseLogDate(entry.log_date).toLocaleDateString(
+                        "en-US",
+                        { weekday: "short", month: "short", day: "numeric", year: "numeric" }
+                      );
+                      const details: string[] = [];
+                      if (entry.steps != null) details.push(`${Number(entry.steps).toLocaleString()} steps`);
+                      if (entry.water_glasses != null) details.push(`💧 ${entry.water_glasses}`);
+                      if (entry.meal_status) details.push(entry.meal_status);
 
-          </div>
-        )}
+                      return (
+                        <button
+                          key={entry.id || entry.log_date}
+                          type="button"
+                          onClick={() => setSelectedDateStr(entry.log_date)}
+                          className={`${styles.historyRowBtn} ${isSelected ? styles.historyRowActive : ""}`}
+                        >
+                          <div className={styles.historyDateCol}>
+                            <span className={styles.historyDateText}>{formatted}</span>
+                            <span className={styles.historyDateSub}>
+                              {details.length > 0 ? details.join(" · ") : "Logged entry"}
+                            </span>
+                          </div>
+                          <div className={styles.historyMetricsCol}>
+                            <span>
+                              {entry.weight_kg != null
+                                ? `${Number(entry.weight_kg).toFixed(1)} kg`
+                                : "—"}
+                            </span>
+                            <span style={{ color: "#64748b" }}>›</span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
