@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ai } from "@/lib/gemini";
+import { getGenAI } from "@/lib/gemini";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +23,7 @@ Provide a concise overview followed by:
 3. Healthier customization tips (if applicable)
 Keep the response clear and easy to read.`;
 
+    const ai = getGenAI();
     const response = await ai.models.generateContent({
       model: "gemini-3.8-flash",
       contents: `Look up verified nutritional data and calorie facts for: "${query}".`,
